@@ -1,0 +1,77 @@
+(define (domain dining)
+(:requirements :strips :typing :time )
+(:types  appliance beverage food furniture location other robot utensil)
+(:predicates
+	 (appliance_at ?appl - appliance ?loca - location) (arm_is_free ?robo - robot) (outlet_at ?outl - appliance ?loca - location) (robot_at ?robo - robot ?loca - location) (table_at ?tabl - furniture ?loca - location) (table_is_clean ?tabl - furniture) (table_is_found ?tabl - furniture) (vacuum_at ?vacu - appliance ?loca - location) (vacuum_is_grasped ?vacu - appliance) (vacuum_is_off ?vacu - appliance) (vacuum_is_on ?vacu - appliance) (vacuum_is_plugged ?vacu - appliance) (vacuum_is_unplugged ?vacu - appliance))
+
+(:action clean_table
+ :parameters ( ?robo - robot ?vacu - appliance ?tabl - furniture ?loca - location)
+ :precondition
+	(and  (table_is_found ?tabl) (robot_at ?robo ?loca) (table_at ?tabl ?loca) (vacuum_is_on ?vacu) (vacuum_is_grasped ?vacu))
+ :effect
+	(and (table_is_clean ?tabl)))
+
+(:action find_table
+ :parameters ( ?robo - robot ?tabl - furniture ?loca - location)
+ :precondition
+	(and  (table_at ?tabl ?loca) (robot_at ?robo ?loca))
+ :effect
+	(and (table_is_found ?tabl)))
+
+(:action grasp_vacuum
+ :parameters ( ?robo - robot ?vacu - appliance ?loca - location)
+ :precondition
+	(and  (robot_at ?robo ?loca) (vacuum_at ?vacu ?loca) (arm_is_free ?robo))
+ :effect
+	(and (vacuum_is_grasped ?vacu) (not (arm_is_free ?robo))))
+
+(:action operate
+ :parameters ( ?robo - robot ?appl - appliance ?loca - location)
+ :precondition
+	(and  (robot_at ?robo ?loca) (appliance_at ?appl ?loca))
+ :effect
+	(and (robot_at ?robo ?loca) (appliance_at ?appl ?loca)))
+
+(:action plug_vacuum
+ :parameters ( ?robo - robot ?vacu - appliance ?outl - appliance ?loca - location)
+ :precondition
+	(and  (robot_at ?robo ?loca) (vacuum_at ?vacu ?loca) (vacuum_is_unplugged ?vacu) (outlet_at ?outl ?loca) (arm_is_free ?robo))
+ :effect
+	(and (vacuum_is_plugged ?vacu) (not (vacuum_is_unplugged ?vacu))))
+
+(:action putdown_vacuum
+ :parameters ( ?robo - robot ?vacu - appliance ?loca - location)
+ :precondition
+	(and  (vacuum_is_off ?vacu) (vacuum_is_grasped ?vacu) (robot_at ?robo ?loca) (vacuum_at ?vacu ?loca))
+ :effect
+	(and (arm_is_free ?robo) (not (vacuum_is_grasped ?vacu))))
+
+(:action turnoff_vacuum
+ :parameters ( ?vacu - appliance)
+ :precondition
+	(and  (not (vacuum_is_off ?vacu)) (vacuum_is_grasped ?vacu))
+ :effect
+	(and (vacuum_is_off ?vacu)))
+
+(:action turnon_vacuum
+ :parameters ( ?vacu - appliance)
+ :precondition
+	(and  (vacuum_is_plugged ?vacu) (vacuum_is_off ?vacu) (vacuum_is_grasped ?vacu))
+ :effect
+	(and (vacuum_is_on ?vacu) (not (vacuum_is_off ?vacu))))
+
+(:action unplug_vacuum
+ :parameters ( ?robo - robot ?vacu - appliance ?outl - appliance ?loca - location)
+ :precondition
+	(and  (robot_at ?robo ?loca) (vacuum_at ?vacu ?loca) (vacuum_is_plugged ?vacu) (vacuum_is_off ?vacu) (outlet_at ?outl ?loca) (arm_is_free ?robo))
+ :effect
+	(and (vacuum_is_unplugged ?vacu)))
+
+(:action walk
+ :parameters ( ?robo - robot ?loca1 - location ?loca2 - location)
+ :precondition
+	(and  (robot_at ?robo ?loca1) (arm_is_free ?robo))
+ :effect
+	(and (arm_is_free ?robo) (robot_at ?robo ?loca2) (not (robot_at ?robo ?loca1))))
+
+)

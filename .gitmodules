@@ -1,0 +1,3 @@
+[submodule "third-party/pddlgym_planners"]
+	path = third-party/pddlgym_planners
+	url = https://github.com/ronuchit/pddlgym_planners.git
