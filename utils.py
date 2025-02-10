@@ -82,37 +82,25 @@ def add_descriptions_to_objects(graph):
     return graph
 
 
-def add_laundry_objects(graph):
+def add_objects(dict,):
+    """
+    Convert a list of dictionaries to a single dictionary in the format readble for scene graph
     
-    # Lista di possibili oggetti con le loro proprietà
-    possible_objects = [
-        {"class_": "pants", "action_affordance": []},
-        {"class_": "dirty_pants", "action_affordance": []},
-        {"class_": "shirt", "action_affordance": []},
-        {"class_": "dirty_shirt", "action_affordance": []},
-        {"class_": "socks", "action_affordance": []},
-        {"class_": "dirty_socks", "action_affordance": []},
-        {"class_": "underwear", "action_affordance": []},
-        {"class_": "dirty_underwear", "action_affordance": []},
-        {"class_": "jacket", "action_affordance": []},
-        {"class_": "dirty_jacket", "action_affordance": []},
-        {"class_": "plate", "action_affordance": []},
-        {"class_": "dirty_plate", "action_affordance": []},
-        {"class_": "knife", "action_affordance": []},
-        {"class_": "dirty_knife", "action_affordance": []},
-        {"class_": "drinking_glass", "action_affordance": []},
-        {"class_": "dirty_drinking_glass", "action_affordance": []},
-        {"class_": "washing_machine", "action_affordance": []},
-        {"class_": "detergent", "action_affordance": []},
-        {"class_": "soap", "action_affordance": []}
-    ]
+    :param list: List of dictionaries
+    :return: Dictionary
+    """
 
-    return possible_objects
 
-# Case soap and detergent, only soap, no washing machine, no soap nor detergent, no soap nor washing machine nor detergent
+def save_graph(graph: Dict, path: str):
+    """
+    Save the 3DSG graph to a file
     
+    :param graph: Dictionary containing the 3DSG
+    :param path: Path to the file
+    """
+    np.savez(path, output=graph)
 
-def add_objects(graph, possible_objects):
+def add_objects(graph, dict_objects):
     """
     Aggiunge oggetti casuali a stanze casuali nel grafo.
 
@@ -121,15 +109,10 @@ def add_objects(graph, possible_objects):
     :return: Grafo aggiornato con nuovi oggetti
     """
     
-    # Lista di possibili oggetti con le loro proprietà
-    #possible_objects = [
-    #    {"class_": "lamp", "action_affordance": []},
-    #    {"class_": "table", "action_affordance": []},
-    #    {"class_": "bookshelf", "action_affordance": []},
-    #    {"class_": "rug", "action_affordance": []},
-    #    {"class_": "tv", "action_affordance": []},
-    #    {"class_": "plastic_trash_bin", "action_affordance": []}
-    #]
+    possible_objects = []
+    for _, obj_value in dict_objects.items():
+        for obj in obj_value:
+            possible_objects.append({"class_": obj, "action_affordance": []})
 
     # Trova ID massimo attuale per evitare conflitti
     if graph["object"]:
@@ -144,7 +127,6 @@ def add_objects(graph, possible_objects):
     for obj_data in possible_objects:
         obj_id = max_id + 1
         obj_type = obj_data["class_"]
-        obj_number = random.randint(1, 3)  # Scegli un numero casuale di oggetti uguali
         room_id = random.choice(room_ids)  # Scegli una stanza casuale
 
         # Genera posizione casuale all'interno della stanza scelta
@@ -154,19 +136,18 @@ def add_objects(graph, possible_objects):
             np.zeros(3)
         ])
 
-        for i in range(obj_number):
-            # Crea nuovo oggetto
-            new_object = {
-                "id": obj_id,
-                "class_": obj_data["class_"],
-                "action_affordance": obj_data["action_affordance"],
-                "location": location,
-                "parent_room": room_id,
-            }
+        # Crea nuovo oggetto
+        new_object = {
+            "id": obj_id,
+            "class_": obj_data["class_"],
+            "action_affordance": obj_data["action_affordance"],
+            "location": location,
+            "parent_room": room_id,
+        }
 
-            # Aggiungi al grafo
-            graph["object"][obj_id] = new_object
-            max_id += 1  # Aggiorna ID massimo
+        # Aggiungi al grafo
+        graph["object"][obj_id] = new_object
+        max_id += 1  # Aggiorna ID massimo
 
     return graph
 

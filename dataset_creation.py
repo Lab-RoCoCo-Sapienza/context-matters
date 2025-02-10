@@ -2,45 +2,46 @@ from utils import *
 import os
 from agent import Agent
 from pprint import pprint
+import json
 
-#for file in os.listdir("3dscenegraph"):
-#    if any(substring in file for substring in ["Allensville"]):
-#        print(file.replace(".npz", ""))
-#        print("OLD\n\n")
-#        graph = ((read_graph_from_path(Path("3dscenegraph/"+file))))
-#        rooms = get_rooms(graph)
-#        for room_id, room_data in rooms.items():
-#            print(room_data['scene_category'])
-#        print(get_verbose_scene_graph(graph))
-#
-#        # Add random laundry objects across the scene (random number of same type, in random rooms)
-#        graph = add_objects(graph, add_laundry_objects(graph))
-#
-#        graph = add_descriptions_to_objects(graph)
-#
-#        print("NEW\n\n")
-#        print(get_verbose_scene_graph(graph))
-#        print("\n\n\n")
-#        break
+dataset_dir = "dataset"
 
-# Iterate over all .yaml files in "dataset/scenes"
-for file in os.listdir(os.path.join("dataset","scenes")):
-    if file.endswith(".yaml"):
-        print(file)
-        # Read the scene graph from the file
-        graph = read_graph_from_path(Path("dataset/scenes/"+file))
+for root_dir, dirs, files in os.walk(dataset_dir):
+    for file in files:
+        if file.endswith(".yaml"):
+            print(file)
+            path = os.path.join(root_dir, file)
 
-        # Get the rooms in the scene
-        rooms = get_rooms(graph)
-        for room_id, room_data in rooms.items():
-            print(room_data['scene_category'])
-        print(get_verbose_scene_graph(graph))
+            #Load json path
+            with open(path) as f:
+                scenes = json.load(f)
+                f.close()
 
-        # Add random laundry objects across the scene (random number of same type, in random rooms)
-        graph = add_objects(graph, add_laundry_objects(graph))
 
-        graph = add_descriptions_to_objects(graph)
+            for scene in scenes.keys():
+                objects = scenes[scene]["objects"]
+                graph_id = scenes[scene]["graph"]
+                domain_dir = os.path.join("dataset", graph_id)
+                os.makedirs(domain_dir, exist_ok=True)
+                problem_dir = os.path.join(domain_dir,scene)
+                if not os.path.exists(problem_dir):
+                    os.makedirs(problem_dir, exist_ok=True)
+                    path_graph = os.path.join("3dscenegraph",os.listdir("3dscenegraph")[graph_id in os.listdir("3dscenegraph")])
+                    print(path_graph)
+                    graph = read_graph_from_path(Path(path_graph))
+                    print(scenes[scene]["description"])
+                    graph = (add_objects(graph, objects))
+                    graph = add_descriptions_to_objects(graph)
+                    save_graph(graph,  os.path.join(problem_dir, graph_id.replace(".npz", "enhanced.npz")))
+                    task_path = os.path.join(problem_dir, "task.txt")
+                    with open(task_path, "w") as f:
+                        f.write(scenes[scene]["description"])
+                        f.close()
+                    
+                    description_path = os.path.join(problem_dir, "description.txt")
+                    with open(description_path, "w") as f:
+                        f.write(scenes[scene]["description"])
+                        f.close()
+                else:
+                    print("Already exists")
 
-        print(get_verbose_scene_graph(graph))
-        print("\n\n\n")
-        break
