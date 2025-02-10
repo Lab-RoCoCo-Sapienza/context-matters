@@ -1,1 +1,5 @@
 pddlgym
+torch
+sentence_trasnformers
+openai
+opencv-python

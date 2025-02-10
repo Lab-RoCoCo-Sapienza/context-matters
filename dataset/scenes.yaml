@@ -1,0 +1,47 @@
+"laundry_1":
+  description: "Wash dirty clothes with a washing machine and detergent"
+  scenes: ["Allensville"]
+  
+  goal: "Wash the dirty clothes using the washing machine."
+  
+  mandatory_objects: ["laundry_equipment"] # Sets of objects that must be all present in the scene
+
+  # Sets of objects that can be chosen randomly (the minimum number of objects is specified by the "at_least" field)
+  random_objects: {
+    "clothes": {
+      at_least: 1,
+      at_most: 3
+    }
+  }
+
+"laundry_2":
+  description: "Task related to washing clothes with a washing machine, but the washing machine is already full"
+  scenes: ["Allensville"]
+  
+  goal: "Wash the dirty clothes using the washing machine."
+  
+  mandatory_objects: ["laundry_equipment"] # Sets of objects that must be all present in the scene
+
+  # Sets of objects that can be chosen randomly (the minimum number of objects is specified by the "at_least" field)
+  random_objects: {
+    "clothes": {
+      at_least: 1,
+      at_most: 3
+    }
+  }
+
+"laundry_3":
+  description: "Task related to washing clothes with a washing machine, but the washing machine is locked"
+  scenes: ["Allensville"]
+  
+  goal: "Wash the dirty clothes using the washing machine."
+  
+  mandatory_objects: ["laundry_equipment"] # Sets of objects that must be all present in the scene
+
+  # Sets of objects that can be chosen randomly (the minimum number of objects is specified by the "at_least" field)
+  random_objects: {
+    "clothes": {
+      at_least: 1,
+      at_most: 3
+    }
+  }

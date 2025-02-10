@@ -223,7 +223,7 @@ def find_robot_location(obs, location_relation_str, location_type_str="location"
 
 
 
-def verify_groundability(plan, graph, domain_file_path, problem_dir, move_action_str, location_relation_str, location_type_str):
+def verify_groundability(plan, graph, domain_file_path, problem_dir, move_action_str, location_relation_str, location_type_str, initial_robot_location):
     """
     Performs grounding of a plan.
 
@@ -249,7 +249,7 @@ def verify_groundability(plan, graph, domain_file_path, problem_dir, move_action
     pprint(initial_observation.literals)
 
     # Find initial robot location from initial observation
-    initial_robot_location = find_robot_location(initial_observation, location_relation_str)
+    #initial_robot_location = find_robot_location(initial_observation, location_relation_str)
         
     if initial_robot_location is None:
         print("Grounding failed because no robot initial location could be found")
@@ -337,9 +337,11 @@ def verify_groundability(plan, graph, domain_file_path, problem_dir, move_action
 
 
 
-def perform_test(problem_dir):
+def plan_and_ground(problem_dir):
 
     knowledge_graph = load_knowledge_graph(os.path.join(problem_dir, "kg.json"))
+
+    initial_location = open(os.path.join(problem_dir, "init_loc.txt", "r").read())
 
     # Generate plan
     plan = run_planner_FD(DOMAIN_FILE_PATH, problem_dir)
@@ -356,18 +358,42 @@ def perform_test(problem_dir):
         knowledge_graph, 
         domain_file_path=DOMAIN_FILE_PATH, 
         problem_dir=problem_dir, 
-        move_action_str="walk", 
-        location_relation_str="at",
-        location_type_str="location"
+        move_action_str="walk",
+        initial_robot_location=initial_location
     )
 
-    print(grounding_success_percentage, failure_object, failure_room)
+    return grounding_success_percentage, failure_object, failure_room, plan
 
 
 
 if __name__ == "__main__":
 
 
+    def perform_test(problem_dir):
+
+        knowledge_graph = load_knowledge_graph(os.path.join(problem_dir, "kg.json"))
+
+        # Generate plan
+        plan = run_planner_FD(DOMAIN_FILE_PATH, problem_dir)
+
+        pprint(plan)
+
+        if plan is None:
+            print("Could not generate plan")
+            return
+
+        # Perform grounding
+        grounding_success_percentage, failure_object, failure_room = verify_groundability(
+            plan, 
+            knowledge_graph, 
+            domain_file_path=DOMAIN_FILE_PATH, 
+            problem_dir=problem_dir, 
+            move_action_str="walk", 
+            location_relation_str="at",
+            location_type_str="location"
+        )
+
+        print(grounding_success_percentage, failure_object, failure_room)
 
     TEST_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tests")
     GROUNDING_TEST_DIR = os.path.join(TEST_DIR, "grounding")
