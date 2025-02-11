@@ -1,0 +1,38 @@
+{
+  "problem_9": {
+    "description": "task related to setup an office",
+    "graph": ["Shelbiana","Allensville", "Parole"],
+    "goal": "remove the objects from the shelf and locker and put the desk the lamp the shelf and the locker in the living room after removed the objects into them",
+    "objects": {
+      "office_objects": ["desk", "lamp", "shelf", "locker"],
+      "objects_in_shelf": ["book  into the shelf", "folder into the shelf", "pen into the shelf", "notebook into the shelf"],
+      "objects_in_locker": ["laptop into the locker", "mouse into the locker", "keyboard into the locker", "headphone into the locker"]
+
+    }
+  },
+  "problem_10": {
+    "description": "task related to setup an office, the locker is cleaned",
+    "graph": ["Shelbiana","Allensville", "Parole"],
+    "goal": "remove the objects from the shelf and locker and put the desk the lamp the shelf and the locker in the living room after removed the objects into them",
+    "objects": {
+      "office_objects": ["desk", "lamp", "shelf", "locker"],
+      "objects_in_shelf": ["book  into the shelf", "folder into the shelf", "pen into the shelf", "notebook into the shelf"]
+    }
+  },
+  "problem_11": {
+    "description": "task related to setup an office, the shelf and the locker are already cleaned",
+    "graph": ["Shelbiana","Allensville", "Parole"],
+    "goal": "remove the objects from the shelf and locker and put the desk the lamp the shelf and the locker in the living room after removed the objects into them",
+    "objects": {
+      "office_objects": ["desk", "lamp", "shelf", "locker"]
+    }
+  },
+  "problem_12": {
+    "description": "task related to setup an office but the shelf is missing and the locker is cleaned",
+    "graph": ["Shelbiana","Allensville", "Parole"],
+    "goal": "remove the objects from the shelf and locker and put the desk the lamp the shelf and the locker in the living room after removed the objects into them",
+    "objects": {
+      "office_objects": ["desk", "lamp", "locker"]
+    }
+  }
+}

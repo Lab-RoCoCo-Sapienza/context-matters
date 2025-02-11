@@ -1,0 +1,27 @@
+{
+  "problem_1": {
+    "description": "Task related to assembling a PC",
+    "graph": ["Shelbiana","Allensville", "Parole"],
+    "goal": "Put six pc parts to assemble a PC in dining room.",
+    "objects": {
+      "pc_parts": ["motherboard", "cpu", "ram", "gpu", "psu", "case", "monitor", "keyboard", "mouse"]
+    }
+  },
+  "problem_2": {
+    "description": "Task related to assembling a PC",
+    "graph": ["Shelbiana","Allensville", "Parole"],
+    "goal": "Put six pc parts to assemble a PC in dining room.",
+    "objects": {
+      "pc_parts": ["motherboard", "cpu", "ram", "gpu"]
+    }
+  },
+  "problem_3": {
+    "description": "Task related to assembling a PC",
+    "graph": ["Shelbiana","Allensville", "Parole"],
+    "goal": "Put six pc parts to assemble a PC in dining room and PC accessories",
+    "objects": {
+      "pc_parts": ["motherboard", "cpu", "ram", "gpu", "psu", "case", "monitor", "keyboard", "mouse"]
+    }
+  }
+}
+
