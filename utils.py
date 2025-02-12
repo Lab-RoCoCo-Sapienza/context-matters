@@ -9,7 +9,7 @@ import random
 
 from collections import defaultdict
 
-from agent import Agent, local_llm_call
+from agent import local_llm_call
 
 def normalize_string(s: str) -> str:
     """Convert string to lowercase and replace spaces/special chars with underscores"""
@@ -274,9 +274,7 @@ def get_room_from_labels_and_pose(graph: Dict,
     # If we cannot find a place containing that object, return None (or do something else)
     return None
 
-def embed_objects(objects: Dict, 
-                  model: SentenceTransformer,
-                  with_material: Optional[bool] = False) -> Dict:
+def embed_objects(objects: Dict, model: SentenceTransformer, with_material: Optional[bool] = False) -> Dict:
     """
     Given a dictionary of objects from a 3DSG, embeds the object descriptions using a SentenceTransformer model.
     
@@ -346,8 +344,7 @@ def find_top_5_similar(object_dict_with_embedding: dict) -> dict:
     
     return results
 
-def get_room_objects_from_pose(graph: Dict,
-                               pose: np.array) -> Dict:
+def get_room_objects_from_pose(graph: Dict, pose: np.array) -> Dict:
     """
     Given a position (np.array) and a 3DSG, 
     return the objects in the room in which the position is located.
@@ -471,81 +468,3 @@ def setup_planning_log(path: str):
 def print_to_planning_log(path: str, message: str):
     with open(path, mode="a") as file:
         file.write(message + "\n")
-
-def generate_scene_graph(goal: str, pddl_problem_path: str, api_key: str) -> str:
-    """
-    Generate a scene graph from a PDDL problem file.
-    
-    Args:
-        goal: The goal description
-        pddl_problem_path: Path to the PDDL problem file
-        api_key: OpenAI API key
-    
-    Returns:
-        str: Scene graph representation in JSON format
-    """
-    # Extract init state from PDDL
-    with open(pddl_problem_path, "r") as f:
-        problem = f.read()
-    init = re.search(r"\(:init(.*?)\(:goal", problem, re.DOTALL).group(1)
-
-    # Create prompt for LLM
-    system_prompt = """
-        You are able to describe the init pddl situation in a graph such as in the following example:
-            INIT: 
-                (:init (arm_is_free robot_1) (outlet_at outlet_1 dining) (robot_at robot_1 kitchen) (table_at table_1 dining) (vacuum_at vacuum_1 dining) (vacuum_is_off vacuum_1) (vacuum_is_unplugged vacuum_1))
-            OUTPUT: 
-                knowledge_graph = {
-                    "nodes": {
-                        "robot_1": {
-                            "attributes": {
-                                "arm_is_free": true,
-                                "location": "kitchen"
-                            }
-                        },
-                        "outlet_1": {
-                            "attributes": {
-                                "location": "dining"
-                            }
-                        },
-                        "table_1": {
-                            "attributes": {
-                                "location": "dining"
-                            }
-                        },
-                        "vacuum_1": {
-                            "attributes": {
-                                "location": "dining",
-                                "is_off": True,
-                                "is_unplugged": true
-                            }
-                        },
-                        "kitchen": {
-                            "type": "location"
-                        },
-                        "dining": {
-                            "type": "location"
-                        }
-                    },
-                    "edges": [
-                        {"source": "robot_1", "relation": "arm_is_free", "target": "true"},
-                        {"source": "robot_1", "relation": "robot_at", "target": "kitchen"},
-                        {"source": "outlet_1", "relation": "outlet_at", "target": "dining"},
-                        {"source": "table_1", "relation": "table_at", "target": "dining"},
-                        {"source": "vacuum_1", "relation": "vacuum_at", "target": "dining"},
-                        {"source": "vacuum_1", "relation": "vacuum_is_off", "target": "true"},
-                        {"source": "vacuum_1", "relation": "vacuum_is_unplugged", "target": "true"}
-                    ]
-                }
-
-            In the output you will write the location of the objects in the init state.
-            The output will be a json parsable in python to generate a graph. Write only the graph
-            and nothing else otherwise all the pipeline fails.
-
-        """
-            
-    user_prompt = f"INIT : {init}"
-    
-    # Call LLM using Agent
-    agent = Agent(api_key)
-    return agent.llm_call(system_prompt, user_prompt)

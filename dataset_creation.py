@@ -1,6 +1,5 @@
 from utils import *
 import os
-from agent import Agent
 from pprint import pprint
 import json
 

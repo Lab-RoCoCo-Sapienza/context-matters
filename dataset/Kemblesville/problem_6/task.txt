@@ -1,1 +1,1 @@
-Task related to washing kitchen objects with a dishwasher
+Wash the dirty kitchen objects using the dishwasher.

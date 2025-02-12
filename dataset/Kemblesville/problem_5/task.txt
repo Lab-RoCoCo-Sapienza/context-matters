@@ -1,1 +1,1 @@
-Task related to washing clothes with a washing machine, but there are no dirty clothes
+Wash the dirty clothes using the washing machine.

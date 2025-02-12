@@ -1,1 +1,1 @@
-Task related to object placement
+Place all bedroom-related objects in the bedroom.
