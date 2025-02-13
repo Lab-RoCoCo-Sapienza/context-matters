@@ -25,3 +25,20 @@ cd third-party/pddlgym_planners/
 pip install -e
 ```
    
+5) Install ollama
+```
+sudo snap install ollama
+```
+
+# Run
+## Dataset creator
+Make sure the virtual environment is activated, then run 
+```
+python3 dataset_creation.py
+```
+
+## Main workflow
+Make sure the virtual environment is activated, then run 
+```
+python3 main.py
+```

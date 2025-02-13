@@ -67,6 +67,14 @@ def filter_graph(graph: Dict, labels: Set[str]) -> Dict:
     return new_graph
 
 
+def get_room_names(graph):
+    return [room_data["scene_category"] + "_" + str(room_id) for room_id, room_data in graph["room"].items()]
+
+
+def choose_random_room(graph):
+    return random.choice(get_room_names(graph))
+
+
 def add_descriptions_to_objects(graph):
     """
     Aggiunge la proprietà "description" a ogni oggetto nel grafo.
@@ -162,7 +170,7 @@ def read_graph_from_path(path: Path) -> Dict:
     :return: Dictionary containing the 3DSG
     """
     
-    print(path)
+    #print(path)
     assert (
         isinstance(path, Path)
     ), "Input file is not a Path"
@@ -393,7 +401,7 @@ def load_planning_log(file_path):
 from collections import defaultdict
 from typing import Dict
 
-def get_verbose_scene_graph(graph: Dict) -> str:
+def get_verbose_scene_graph(graph: Dict, as_string=True) -> str:
     """
     Given a 3DSG, return a verbose description of the scene graph with meaningful information,
     including room names, objects, and their descriptions.
@@ -424,19 +432,33 @@ def get_verbose_scene_graph(graph: Dict) -> str:
         if r_id in rooms:
             obj_label = obj_id_to_label[o_id]
             obj_description = obj_info.get('description', 'No description available')
-            room_to_objects[r_id].append(f"{obj_label} - {obj_description}")
+            room_to_objects[r_id].append((obj_label, obj_description))
     
     # 4. Construct the output string.
-    lines = []
-    for r_id in rooms:
-        room_label = room_id_to_label[r_id]
-        objs_in_room = room_to_objects.get(r_id, ["No objects"])
-        objs_str = "\n  - " + "\n  - ".join(objs_in_room)
-        lines.append(f"{room_label}:\n{objs_str}")
+    if as_string:
+        lines = []
+        for r_id in rooms:
+            room_label = room_id_to_label[r_id]
+            objs_in_room = room_to_objects.get(r_id, [])
+            obj_lines = []
+            if objs_in_room:
+                for obj in objs_in_room:
+                    obj_lines.append(f"{obj[0]} - {obj[1]}")
+            
+                objs_str = "\n  - " + "\n  - ".join(obj_lines)
+            else:
+                objs_str = "  - No objects"
+            lines.append(f"\n\n{room_label}:{objs_str}")
 
-    # 5. Return the final string.
-    return "\n".join(lines)
-
+        return "\n".join(lines)
+    else:
+        output = {}
+        for r_id in rooms:
+            room_label = room_id_to_label[r_id]
+            objs_in_room = room_to_objects.get(r_id, [])
+            output[room_label] = objs_in_room
+        return output
+    
 
 
 def copy_file(src: str, dst: str):
@@ -448,6 +470,7 @@ def copy_file(src: str, dst: str):
     """
     with open(src, "r") as f:
         data = f.read()
+
     with open(dst, "w") as f:
         f.write(data)
 
@@ -468,3 +491,9 @@ def setup_planning_log(path: str):
 def print_to_planning_log(path: str, message: str):
     with open(path, mode="a") as file:
         file.write(message + "\n")
+
+def load_knowledge_graph(kg_path):
+    with open(kg_path, 'rb') as f:
+        # Load json file
+        kg = json.load(f)
+    return kg

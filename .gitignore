@@ -175,3 +175,5 @@ third_party/
 .venv
 
 key.txt
+
+3dscenegraph

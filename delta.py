@@ -357,3 +357,6 @@ sub_goals_pddl = decompose_pddl_goal(
 )
 
 print(sub_goals_pddl)
+
+# task.txt (al posto di description)
+# npz

@@ -1,9 +1,13 @@
 import os 
 import json
 from pprint import pprint
+from pathlib import Path
+
+from pddlgym.core import InvalidAction
+
 
 from planner import run_planner_FD, execute_plan, execute_action, initialize_pddl_environment
-from utils import load_knowledge_graph
+from utils import load_knowledge_graph, read_graph_from_path, get_verbose_scene_graph
 
 
 
@@ -57,27 +61,33 @@ def verify_subplan_groundability(pddlgym_environment, locations_dictionary, subp
 
 
     # Collect all objects of locations_dictionary that have the value location
-    objects_in_room = []
-    for obj, loc in locations_dictionary.items():
-        if loc == location:
-            objects_in_room.append(obj)
+    #objects_in_room = []
+    #for obj, loc in locations_dictionary.items():
+    #    if loc == location:
+    #        objects_in_room.append(obj)
     #print(f"Objects in room: {objects_in_room}")
 
     objects_to_find = []
     for action in subplan["actions"]:
         action = str(action)
-        action_args = [arg.split(":")[0] for arg in action.split("(")[1].split(",")]
+        #action_args = [arg.split(":")[0] for arg in action.split("(")[1].split(",")]
         #print(f"Action arguments: {action_args}")
 
-        for arg in action_args:
-            if arg!=location and not arg in objects_in_room:
-                print("Grounding failed for action "+action+" because "+arg+" could not be found in "+subplan["location"]+".")
-                return successful_actions, arg, subplan["location"]
+        #for arg in action_args:
+        #    if arg!=location and not arg in objects_in_room:
+        #        print("Grounding failed for action "+action+" because "+arg+" could not be found in "+subplan["location"]+".")
+        #        return successful_actions, arg, subplan["location"]
 
+        try:
+            pddlgym_environment, obs = execute_action(pddlgym_environment, move_action)
+        except InvalidAction as e:
+            print("Grounding failed for action "+action+" because: '"+str(e)+"'")
+            return successful_actions, "", ""
+            
         successful_actions += 1
 
 
-    print("\tGrounding successful")
+    #print("\tGrounding successful")
     return successful_actions, "", ""
 
 
@@ -99,8 +109,8 @@ def extract_locations_from_movement_action(action):
 
     #print(action_args)
 
-    from_location = action_args[0].split(":")[0]
-    to_location = action_args[1].split(":")[0]
+    from_location = action_args[1].split(":")[0]
+    to_location = action_args[2].split(":")[0]
 
     return from_location, to_location
 
@@ -108,27 +118,18 @@ def extract_locations_from_movement_action(action):
 
 # Given a scene graph, extract a dictionary object -> location
 def extract_locations_dictionary(graph):
-    """
-    Given a scene graph, extracts a dictionary mapping objects to locations.
-
-    Args:
-        graph: The scene graph.
-
-    Returns:
-        Dictionary mapping objects to locations.
-    """
     locations = {}
-    for node, data in graph["nodes"].items():
-        if "attributes" not in data.keys():
-            continue
-        assert "location" in data["attributes"]
-        locations[node] = data["attributes"]["location"]
+
+    for location, objects in graph.items():
+        for obj in objects:
+            obj_name = obj[0]
+            locations[obj_name] = location
     
     return locations
 
 
 
-def update_locations_dictionary(locations_dictionary, new_environment_state, location_relation_str = "at", location_variable_type = "location"):
+def update_locations_dictionary(locations_dictionary, new_environment_state, location_relation_str = "at", location_variable_type = "room"):
     """
     Updates the locations dictionary based on the new environment state.
 
@@ -153,7 +154,7 @@ def update_locations_dictionary(locations_dictionary, new_environment_state, loc
             "_"+location_relation_str in predicate_name or\
                 location_relation_str+"_" in predicate_name:
             
-            # Make sure that the location is the second variable in the "at" relation
+            # Make sure that the location is the second variable in the location relation
             assert location_variable_type in str(literal.variables[1])
 
             pddl_object = str(literal.variables[0]).split(":")[0]
@@ -178,7 +179,7 @@ def update_locations_dictionary(locations_dictionary, new_environment_state, loc
 
 
 
-def find_robot_location(obs, location_relation_str, location_type_str="location", robot_type_str="robot"):
+def find_robot_location(obs, location_relation_str, location_type_str="room", robot_type_str="robot"):
     """
     Finds the initial robot location from the initial observation.
 
@@ -195,8 +196,6 @@ def find_robot_location(obs, location_relation_str, location_type_str="location"
     for literal in obs.literals:
         predicate_name = str(literal.predicate)
 
-        #print(predicate_name)
-
         # If the location_relation_str is in the predicate name
         if location_relation_str == predicate_name or\
             "_"+location_relation_str in predicate_name or\
@@ -207,19 +206,21 @@ def find_robot_location(obs, location_relation_str, location_type_str="location"
             location = ""
             is_robot_location_predicate = False
             for variable in literal.variables:
-                #print(variable)
                 var_components = str(variable).split(":")
+
                 if location_type_str == var_components[1]:
                     location = var_components[0]
+                    
                 if robot_type_str == var_components[1]:
+                    robot_name = var_components[0]
                     is_robot_location_predicate = True
                 
                 if location:
                     if is_robot_location_predicate:
                         assert location, "There should be a location in a predicate expressing the robot location"
-                        return location
+                        return location, robot_name
 
-    return None
+    return None, None
 
 
 
@@ -246,17 +247,21 @@ def verify_groundability(plan, graph, domain_file_path, problem_dir, move_action
     # Initialize PDDLgym environment and obtain the first observation
     pddlgym_environment, initial_observation = initialize_pddl_environment(domain_file_path, problem_dir)
 
-    pprint(initial_observation.literals)
+    #pprint(initial_observation.literals)
 
-    # Find initial robot location from initial observation
-    #initial_robot_location = find_robot_location(initial_observation, location_relation_str)
-        
-    if initial_robot_location is None:
-        print("Grounding failed because no robot initial location could be found")
-        return 0, "", ""
-    else:
-        print(f"Initial robot location {initial_robot_location}")
-
+    # Find initial robot location from initial observation of the PDDLGym environment (the initial location of the robot in the PDDL problem)
+    initial_PDDL_robot_location, robot_name = find_robot_location(initial_observation, location_relation_str)
+    #print(str(initial_PDDL_robot_location), " ", str(robot_name))
+    
+    # Check that the initial robot location is specified in the PDDL problem
+    if initial_PDDL_robot_location is None:
+        print(f"Grounding failed because the initial robot location is not specified in the PDDL problem")
+        return 0, robot_name, ""
+    
+    # Check that the PDDL problem contains the correct robot location
+    if initial_PDDL_robot_location != initial_robot_location:
+        print(f"Grounding failed because the robot location in the PDDL problem is not the requested one (desired: {initial_robot_location}, found: {initial_PDDL_robot_location})")
+        return 0, robot_name, initial_robot_location
 
     # Initialize the first empty subplan
     current_subplan = {
@@ -265,14 +270,18 @@ def verify_groundability(plan, graph, domain_file_path, problem_dir, move_action
         "actions": []
         }
 
-
     # Extract a "object -> location" map
     locations_dictionary = extract_locations_dictionary(graph)
 
+    # Explicitly add the robot to the locations_dictionary at its initial_robot_location
+    if robot_name not in locations_dictionary:
+        locations_dictionary[robot_name] = initial_robot_location
+
+    #pprint(locations_dictionary)
     
     # [Problem hallucination checks]
 
-    # Check that the initial location exists
+    # Check that the initial location exists in the locations dictionary
     if not initial_robot_location in locations_dictionary.values():
         return 0, "", initial_robot_location
 
@@ -285,7 +294,7 @@ def verify_groundability(plan, graph, domain_file_path, problem_dir, move_action
                 return 0, obj, loc
 
 
-    pprint(plan)
+    #pprint(plan)
     
 
     # Subdivide plan into subplans, using movement actions as splitting criterion
@@ -315,13 +324,17 @@ def verify_groundability(plan, graph, domain_file_path, problem_dir, move_action
     current_location = initial_robot_location
     for subplan in subplans:
         
+        print("Verifying subplan: "+str(subplan))
+
         if subplan["move_action"]:
             current_location = subplan["location"]
 
         # Attempt grounding for the current subplan (the part of a plan happening in a single room)    
         successful_actions, failure_object, failure_room = verify_subplan_groundability(pddlgym_environment, locations_dictionary, subplan, current_location)
 
-        print(successful_actions, failure_object, failure_room)
+        print("successful_actions: "+str(successful_actions))
+        print("failure_object: "+str(failure_object))
+        print("failure_room: "+str(failure_room))
 
         if not successful_actions:
             return grounding_percentage, failure_object, failure_room
@@ -329,12 +342,11 @@ def verify_groundability(plan, graph, domain_file_path, problem_dir, move_action
             total_successful_actions += successful_actions
             grounding_percentage = total_successful_actions / len(plan)
 
-            if successful_actions < len(subplan):
+            if successful_actions < len(subplan["actions"]) + 1 if subplan["move_action"] else 0:
                 return grounding_percentage, failure_object, failure_room
 
 
     return grounding_percentage, "", ""
-
 
 
 def plan_and_ground(problem_dir):
@@ -371,7 +383,18 @@ if __name__ == "__main__":
 
     def perform_test(problem_dir):
 
-        knowledge_graph = load_knowledge_graph(os.path.join(problem_dir, "kg.json"))
+        #knowledge_graph = load_knowledge_graph(os.path.join(problem_dir, "kg.json"))
+
+        # Look for a file with extension .npz, get its path
+        path_graph = ""
+        for file in os.listdir(problem_dir):
+            if file.endswith(".npz"):
+                path_graph = os.path.join(problem_dir, file)
+                break
+
+        scene_graph = read_graph_from_path(Path(path_graph))
+        knowledge_graph = get_verbose_scene_graph(scene_graph, as_string=False)
+        #pprint(knowledge_graph)
 
         # Generate plan
         plan = run_planner_FD(DOMAIN_FILE_PATH, problem_dir)
@@ -390,7 +413,7 @@ if __name__ == "__main__":
             problem_dir=problem_dir, 
             move_action_str="walk", 
             location_relation_str="at",
-            location_type_str="location"
+            location_type_str="room"
         )
 
         print(grounding_success_percentage, failure_object, failure_room)

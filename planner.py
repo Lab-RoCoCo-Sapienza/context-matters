@@ -10,15 +10,23 @@ FAST_DOWNWARD_PATH = "downward/fast-downward.py"
 
 def run_planner_FD(domain_file_path, problem_dir):
 
-    # Create PDDLEnv
-    env = PDDLEnv(domain_file_path, problem_dir, operators_as_actions = True)
+    try:
+        # Create PDDLEnv
+        env = PDDLEnv(domain_file_path, problem_dir, operators_as_actions = True)
+    except Exception as e:
+        print("Exception in PDDLEnv: "+str(e))
+        return None, str(e), None
 
     # Use only first problem in directory
     env.fix_problem_index(0)
     
-    # Reset environment
-    obs,  debug_info = env.reset()
-
+    try:
+        # Reset environment
+        obs,  debug_info = env.reset()
+    except Exception as e:
+        print("Exception in PDDLEnv reset: "+str(e))
+        return None, str(e), None
+        
     # Create planner
     planner = FD()
 
@@ -26,11 +34,29 @@ def run_planner_FD(domain_file_path, problem_dir):
     try:
         plan = planner(env.domain, obs)
     except Exception as e:
-        print(e)
-        plan = None
+        print("Exception in FD planner: "+str(e))
+        return None, None, str(e)
 
-    return plan
+    return plan, None, None
 
+
+def plan_with_output(domain_file_path, problem_dir, plan_file_path):
+
+    # PLANNING #
+    
+    print("\n\n\tPerforming planning...")
+    plan, pddlenv_error_log, planner_error_log = run_planner_FD(domain_file_path, problem_dir)
+
+    # Save planner output
+    with open(plan_file_path, "w") as file:
+        if plan is not None:    
+            file.write(str(plan))
+        elif pddlenv_error_log is not None:
+            file.write(pddlenv_error_log)
+        elif planner_error_log is not None:
+            file.write(planner_error_log)
+
+    return plan, pddlenv_error_log, planner_error_log
 
 
 def initialize_pddl_environment(domain_file_path, problem_dir):
