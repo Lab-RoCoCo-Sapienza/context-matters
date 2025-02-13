@@ -29,7 +29,9 @@ def llm_call(prompt, question):
             "role": "user",
             "content": question
         }
-    ]
+    ],
+    temperature=0.1,
+    top_p=1,
     )
 
     return (completion.choices[0].message.content)

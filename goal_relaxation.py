@@ -1,5 +1,6 @@
 from agent import *
 from utils import *
+from pprint import pprint
 
 class GoalRelaxation:
 
@@ -15,7 +16,6 @@ class GoalRelaxation:
         return graph, task
 
     def dict_replacable_objects(self, problem_dir):
-        alternatives = {}
         graph, task = self.get_graph_and_task(problem_dir)
         objects_in_graph = get_verbose_scene_graph(graph)
         print(objects_in_graph)
@@ -23,13 +23,25 @@ class GoalRelaxation:
         print("\n\n______________________\n\n")
         print(task)
 
-        return alternatives
-    
-    def relaxate_goal(self):
-        goal = ""
+        answer = llm_call(open(os.path.join("prompt", "replace_objects.txt"),"r").read(), "SCENE: \n" + objects_in_graph + "\n\nTASK: \n" + task)
+        print(answer)
+        pattern = r'```json\s*([\s\S]*?)\s*```'
+        match = re.findall(pattern, answer)
 
-        return goal
+        new_goal = answer.split("<NEW_GOAL>")[1]
+
+        return match, new_goal
+    
+    def relaxate_goal(self,objects,goal):
+        answer = llm_call(open(os.path.join("prompt", "relaxate_goal.txt"),"r").read(),"Objects:\n" + str(objects) + "\nGoal:" + goal)
+        return answer
 
 goal_relaxation = GoalRelaxation()
-path_problem = "/home/michele/Desktop/IROS_2025/context-matters/dataset/Allensville/problem_1"
-print(goal_relaxation.dict_replacable_objects(path_problem))
+path_problem = "/home/michele/Desktop/IROS_2025/context-matters/dataset/Allensville/problem_2"
+
+graph, task = goal_relaxation.get_graph_and_task(path_problem)
+alternativies, new_goal = goal_relaxation.dict_replacable_objects(path_problem)
+print(alternativies)
+print(new_goal)
+
+print(goal_relaxation.relaxate_goal(get_verbose_scene_graph(graph),new_goal))
