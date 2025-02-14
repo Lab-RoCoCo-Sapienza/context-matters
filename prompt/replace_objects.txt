@@ -56,5 +56,7 @@ Output:
 }
 
 Come vedi nel dizionario ci sono tre object_id dove per object_id intendo il gruppo semantico di oggetti simili.
-Dove id va da 1 a n dove n è il massimo numero di gruppi di oggetti che serve per il task.
+Dove id va da 1 a n dove n è il massimo numero di gruppi di oggetti che serve per il task. Sostituirai 
+object con il gruppo semantico appartente. Il dizionario deve essere in formato JSON serializzabile.
 Nell'esempio per appendere un quadro. Ho bisogno di un quadro un chiodo e un qualcosa per fissare il quadro. Quindi n è uguale a 3.
+Alla fine usa il token <NEW_GOAL> per riscrivere il goal da raggiungere dettagliato.
