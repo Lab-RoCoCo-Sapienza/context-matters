@@ -1,7 +1,6 @@
-from agent import Agent
+from agent import llm_call
 from utils import *
-
-agent = Agent(api_key="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")
+from pathlib import Path
 
 def generate_pddl_domain(task_file):
     """
@@ -62,13 +61,8 @@ def generate_pddl_domain(task_file):
     task_description = Path(task_file).read_text()
     question = question.replace("<task>", task_description)
 
-    domain_pddl = agent.llm_call(prompt, question)
+    domain_pddl = llm_call(prompt, question)
     return domain_pddl.replace("`", "").replace("pddl", "")
-
-# Generazione del dominio
-domain = generate_pddl_domain("dataset/Allensville/problem_1/task.txt")
-print(domain)
-
 
 def prune_scene_graph(scene_graph_path, goal_description_path):
     """
@@ -102,17 +96,8 @@ def prune_scene_graph(scene_graph_path, goal_description_path):
     question = question.replace("<new_graph>", str(filtered_new_sg)).replace("<GOAL>", goal_description)
 
     # Esegui il pruning
-    pruned_sg = agent.llm_call(prompt, question)
+    pruned_sg = llm_call(prompt, question)
     return pruned_sg
-
-# Pruning del Scene Graph
-pruned_sg = prune_scene_graph(
-    "dataset/Allensville/problem_1/Allensville.npz",
-    "dataset/Allensville/problem_1/description.txt"
-)
-
-print(pruned_sg)
-
 
 def generate_pddl_problem(scene_graph_path, goal_description_path, domain_pddl_path):
     """
@@ -226,21 +211,8 @@ def generate_pddl_problem(scene_graph_path, goal_description_path, domain_pddl_p
     question = question.replace("<domain_pddl>", domain_pddl)
 
     # Esegui la generazione del PDDL del problema
-    problem_pddl = agent.llm_call(prompt, question)
+    problem_pddl = llm_call(prompt, question)
     return problem_pddl.replace("`", "").replace("pddl", "")
-
-# Generazione del problema PDDL
-problem_pddl = generate_pddl_problem(
-    "dataset/Allensville/problem_1/Allensville.npz",
-    "dataset/Allensville/problem_1/description.txt",
-    "dataset/Allensville/domain.pddl"
-)
-
-print(problem_pddl)
-
-with open("problem.pddl","w") as f:
-    f.write(problem_pddl)
-
 
 def decompose_pddl_goal(problem_pddl_path, domain_pddl_path):
     """
@@ -347,16 +319,35 @@ def decompose_pddl_goal(problem_pddl_path, domain_pddl_path):
     """
 
     # Esegui la generazione dei sub-goal PDDL
-    sub_goals_pddl = agent.llm_call(prompt, question)
+    sub_goals_pddl = llm_call(prompt, question)
     return sub_goals_pddl.replace("`", "").replace("pddl", "")
 
-# Generazione dei sub-goal PDDL
-sub_goals_pddl = decompose_pddl_goal(
-    "problem.pddl",
-    "dataset/Allensville/domain.pddl"
-)
+if __name__ == "__main__":
+    # Generazione del dominio
+    domain = generate_pddl_domain("dataset/Allensville/problem_1/task.txt")
+    print(domain)
 
-print(sub_goals_pddl)
+    # Pruning del Scene Graph
+    pruned_sg = prune_scene_graph(
+        "dataset/Allensville/problem_1/Allensville.npz",
+        "dataset/Allensville/problem_1/description.txt"
+    )
+    print(pruned_sg)
 
-# task.txt (al posto di description)
-# npz
+    # Generazione del problema PDDL
+    problem_pddl = generate_pddl_problem(
+        "dataset/Allensville/problem_1/Allensville.npz",
+        "dataset/Allensville/problem_1/description.txt",
+        "dataset/Allensville/domain.pddl"
+    )
+    print(problem_pddl)
+
+    with open("problem.pddl", "w") as f:
+        f.write(problem_pddl)
+
+    # Generazione dei sub-goal PDDL
+    sub_goals_pddl = decompose_pddl_goal(
+        "problem.pddl",
+        "dataset/Allensville/domain.pddl"
+    )
+    print(sub_goals_pddl)

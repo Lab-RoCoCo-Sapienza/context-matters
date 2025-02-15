@@ -30,7 +30,6 @@ def verify_subplan_groundability(pddlgym_environment, locations_dictionary, subp
     # Find the move action in the subplan
     move_action = subplan["move_action"]
     if move_action:
-        #print(f"Move action: {move_action}")
     
         # Find the action arguments
         from_location, to_location = extract_locations_from_movement_action(move_action)
@@ -39,12 +38,12 @@ def verify_subplan_groundability(pddlgym_environment, locations_dictionary, subp
         # Find the from_location of the current subplan
         if from_location not in locations_dictionary.values():
             print(f"Error: Location {from_location} not found in scene graph")
-            return 0, "", from_location
+            return 0, f"Location {from_location} not found in scene graph"
         
         #Find the to_location of the current subplan
         if to_location not in locations_dictionary.values():
             print(f"Error: Location {to_location} not found in scene graph")
-            return 0, "", to_location
+            return 0, f"Location {to_location} not found in scene graph"
         
         # Perform a PDDL gym step to move the robot
         pddlgym_environment, obs = execute_action(pddlgym_environment, move_action)
@@ -53,42 +52,25 @@ def verify_subplan_groundability(pddlgym_environment, locations_dictionary, subp
         locations_dictionary, hallucinated_obj, hallucinated_loc = update_locations_dictionary(locations_dictionary, obs)
 
         if hallucinated_obj or hallucinated_loc:
-            return 0, hallucinated_obj, hallucinated_loc
+            return 0, f"Hallucinated object: {hallucinated_obj}, Hallucinated location: {hallucinated_loc}"
         
         location = to_location
         successful_actions += 1
 
 
 
-    # Collect all objects of locations_dictionary that have the value location
-    #objects_in_room = []
-    #for obj, loc in locations_dictionary.items():
-    #    if loc == location:
-    #        objects_in_room.append(obj)
-    #print(f"Objects in room: {objects_in_room}")
-
     objects_to_find = []
     for action in subplan["actions"]:
-        action = str(action)
-        #action_args = [arg.split(":")[0] for arg in action.split("(")[1].split(",")]
-        #print(f"Action arguments: {action_args}")
-
-        #for arg in action_args:
-        #    if arg!=location and not arg in objects_in_room:
-        #        print("Grounding failed for action "+action+" because "+arg+" could not be found in "+subplan["location"]+".")
-        #        return successful_actions, arg, subplan["location"]
 
         try:
-            pddlgym_environment, obs = execute_action(pddlgym_environment, move_action)
+            pddlgym_environment, obs = execute_action(pddlgym_environment, action)
         except InvalidAction as e:
             print("Grounding failed for action "+action+" because: '"+str(e)+"'")
-            return successful_actions, "", ""
+            return successful_actions, f"Grounding failed for action {action} because: '{str(e)}'"
             
         successful_actions += 1
 
-
-    #print("\tGrounding successful")
-    return successful_actions, "", ""
+    return successful_actions, ""
 
 
 
@@ -106,8 +88,6 @@ def extract_locations_from_movement_action(action):
         action = str(action)
 
     action_args = action.split("(")[1].split(",")
-
-    #print(action_args)
 
     from_location = action_args[1].split(":")[0]
     to_location = action_args[2].split(":")[0]
@@ -160,18 +140,15 @@ def update_locations_dictionary(locations_dictionary, new_environment_state, loc
             pddl_object = str(literal.variables[0]).split(":")[0]
             new_location = str(literal.variables[1]).split(":")[0]
 
-            #print("PDDL obj: " + str(pddl_object))
-            #print("New location: " + str(new_location))
-
             # Check that the PDDLgym state objects are present in the locations dictionary, 
             # otherwise they are the result of hallucinations in the problem generation step
             if pddl_object not in new_locations_dictionary.keys():
-                return new_locations_dictionary, hallucinated_obj, ""
+                return new_locations_dictionary, pddl_object, ""
 
             # Check that the PDDLgym state locations are present in the locations dictionary, 
             # otherwise they are the result of hallucinations in the problem generation step
             if new_location not in new_locations_dictionary.values():
-                return new_locations_dictionary, "", hallucinated_loc
+                return new_locations_dictionary, "", new_location
                 
             new_locations_dictionary[pddl_object] = new_location
 
@@ -192,7 +169,6 @@ def find_robot_location(obs, location_relation_str, location_type_str="room", ro
         The initial robot location.
     """
     # Find initial robot location from initial observation
-    #print(obs.literals)
     for literal in obs.literals:
         predicate_name = str(literal.predicate)
 
@@ -247,21 +223,18 @@ def verify_groundability(plan, graph, domain_file_path, problem_dir, move_action
     # Initialize PDDLgym environment and obtain the first observation
     pddlgym_environment, initial_observation = initialize_pddl_environment(domain_file_path, problem_dir)
 
-    #pprint(initial_observation.literals)
-
     # Find initial robot location from initial observation of the PDDLGym environment (the initial location of the robot in the PDDL problem)
     initial_PDDL_robot_location, robot_name = find_robot_location(initial_observation, location_relation_str)
-    #print(str(initial_PDDL_robot_location), " ", str(robot_name))
     
     # Check that the initial robot location is specified in the PDDL problem
     if initial_PDDL_robot_location is None:
         print(f"Grounding failed because the initial robot location is not specified in the PDDL problem")
-        return 0, robot_name, ""
+        return 0, f"Grounding failed because the initial robot location is not specified in the PDDL problem"
     
     # Check that the PDDL problem contains the correct robot location
     if initial_PDDL_robot_location != initial_robot_location:
         print(f"Grounding failed because the robot location in the PDDL problem is not the requested one (desired: {initial_robot_location}, found: {initial_PDDL_robot_location})")
-        return 0, robot_name, initial_robot_location
+        return 0, f"Grounding failed because the robot location in the PDDL problem is not the requested one (desired: {initial_robot_location}, found: {initial_PDDL_robot_location})"
 
     # Initialize the first empty subplan
     current_subplan = {
@@ -277,24 +250,37 @@ def verify_groundability(plan, graph, domain_file_path, problem_dir, move_action
     if robot_name not in locations_dictionary:
         locations_dictionary[robot_name] = initial_robot_location
 
-    #pprint(locations_dictionary)
     
     # [Problem hallucination checks]
 
     # Check that the initial location exists in the locations dictionary
     if not initial_robot_location in locations_dictionary.values():
-        return 0, "", initial_robot_location
-
+        return 0, f"Grounding failed because initial robot location in the PDDL problem was different from the location in the knowledge graph."
     # Check that the initial location in the initial PDDLgym state coincides with the initial location in the knowledge graph
     # Look for the robot
     for obj, loc in locations_dictionary.items():
         if "robot" in obj:
             if loc != initial_robot_location:
                 print("Grounding failed because initial robot location in the PDDL problem was different from the location in the knowledge graph.")
-                return 0, obj, loc
+                return 0, f"Grounding failed because initial robot location in the PDDL problem was different from the location in the knowledge graph."
 
+    # Check that all the objects in the initial PDDLgym state are present in the knowledge graph
+    # (to make sure we're not introducing any hallucination in the planning process)
+    for literal in initial_observation.literals:
+        for variable in literal.variables:
 
-    #pprint(plan)
+            var_components = str(variable).split(":")
+            # In case variable is a room, check that it is in the keys of the location -> object dictionary
+            if var_components[1] == location_type_str and str(var_components[0]) not in locations_dictionary.values():
+                print("Grounding failed because object "+str(var_components[0])+" was not found in the knowledge graph.")
+                return 0, f"Grounding failed because object {str(var_components[0])} was not found in the knowledge graph."
+            
+            # In case variable is not a room, check that it is in the values of the location -> object dictionary
+            if var_components[1] != location_type_str and str(var_components[0]) not in locations_dictionary.keys():
+                print("Grounding failed because object "+str(var_components[0])+" was not found in the knowledge graph.")
+                return 0, f"Grounding failed because object {str(var_components[0])} was not found in the knowledge graph."
+            
+
     
 
     # Subdivide plan into subplans, using movement actions as splitting criterion
@@ -330,23 +316,19 @@ def verify_groundability(plan, graph, domain_file_path, problem_dir, move_action
             current_location = subplan["location"]
 
         # Attempt grounding for the current subplan (the part of a plan happening in a single room)    
-        successful_actions, failure_object, failure_room = verify_subplan_groundability(pddlgym_environment, locations_dictionary, subplan, current_location)
-
-        print("successful_actions: "+str(successful_actions))
-        print("failure_object: "+str(failure_object))
-        print("failure_room: "+str(failure_room))
+        successful_actions, reason_for_failure = verify_subplan_groundability(pddlgym_environment, locations_dictionary, subplan, current_location)
 
         if not successful_actions:
-            return grounding_percentage, failure_object, failure_room
+            return grounding_percentage, reason_for_failure
         else:
             total_successful_actions += successful_actions
             grounding_percentage = total_successful_actions / len(plan)
 
             if successful_actions < len(subplan["actions"]) + 1 if subplan["move_action"] else 0:
-                return grounding_percentage, failure_object, failure_room
+                return grounding_percentage, reason_for_failure
 
 
-    return grounding_percentage, "", ""
+    return grounding_percentage, ""
 
 
 def plan_and_ground(problem_dir):
@@ -358,14 +340,12 @@ def plan_and_ground(problem_dir):
     # Generate plan
     plan = run_planner_FD(DOMAIN_FILE_PATH, problem_dir)
 
-    pprint(plan)
-
     if plan is None:
         print("Could not generate plan")
         return
 
     # Perform grounding
-    grounding_success_percentage, failure_object, failure_room = verify_groundability(
+    grounding_success_percentage, reason_for_failure = verify_groundability(
         plan, 
         knowledge_graph, 
         domain_file_path=DOMAIN_FILE_PATH, 
@@ -374,7 +354,7 @@ def plan_and_ground(problem_dir):
         initial_robot_location=initial_location
     )
 
-    return grounding_success_percentage, failure_object, failure_room, plan
+    return grounding_success_percentage, reason_for_failure, plan
 
 
 
@@ -394,19 +374,16 @@ if __name__ == "__main__":
 
         scene_graph = read_graph_from_path(Path(path_graph))
         knowledge_graph = get_verbose_scene_graph(scene_graph, as_string=False)
-        #pprint(knowledge_graph)
 
         # Generate plan
         plan = run_planner_FD(DOMAIN_FILE_PATH, problem_dir)
-
-        pprint(plan)
 
         if plan is None:
             print("Could not generate plan")
             return
 
         # Perform grounding
-        grounding_success_percentage, failure_object, failure_room = verify_groundability(
+        grounding_success_percentage, reason_for_failure = verify_groundability(
             plan, 
             knowledge_graph, 
             domain_file_path=DOMAIN_FILE_PATH, 
@@ -416,7 +393,7 @@ if __name__ == "__main__":
             location_type_str="room"
         )
 
-        print(grounding_success_percentage, failure_object, failure_room)
+        print(grounding_success_percentage, reason_for_failure)
 
     TEST_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tests")
     GROUNDING_TEST_DIR = os.path.join(TEST_DIR, "grounding")

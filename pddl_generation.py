@@ -116,7 +116,8 @@ def refine_problem(
     workflow_iteration,
     refinement_iteration,
     pddlenv_error_log = None,
-    planner_error_log = None
+    planner_error_log = None,
+    grounding_error_log = None
 ):
 
     # 1) Read the relevant files
@@ -163,6 +164,14 @@ def refine_problem(
         The FD planner of the PDDLGym library returned the following error:
         ```
         {planner_error_log}
+        ```
+    """
+
+    if grounding_error_log is not None:
+        reason_user_prompt += f"""
+        The grounding of the problem returned the following error:
+        ```
+        {grounding_error_log}
         ```
     """
 

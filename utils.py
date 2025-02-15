@@ -497,3 +497,21 @@ def load_knowledge_graph(kg_path):
         # Load json file
         kg = json.load(f)
     return kg
+
+def print_red(text: str):
+    print(f"\033[91m{text}\033[0m")
+
+def print_green(text: str):
+    print(f"\033[92m{text}\033[0m")
+
+def print_yellow(text: str):
+    print(f"\033[93m{text}\033[0m")
+
+def print_blue(text: str):
+    print(f"\033[94m{text}\033[0m")
+
+def print_magenta(text: str):
+    print(f"\033[95m{text}\033[0m")
+
+def print_cyan(text: str):
+    print(f"\033[96m{text}\033[0m")

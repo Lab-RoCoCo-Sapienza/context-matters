@@ -170,9 +170,9 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 
-third_party/
+third_party
 
-.venv
+.venv/
 
 key.txt
 

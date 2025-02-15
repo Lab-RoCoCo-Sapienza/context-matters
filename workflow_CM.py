@@ -1,4 +1,3 @@
-
 import os
 import hashlib
 from pathlib import Path
@@ -6,13 +5,20 @@ from pprint import pprint
 
 from planner import plan_with_output
 from pddl_generation import generate_problem, refine_problem
+from goal_relaxation import relax_goal, dict_replaceable_objects
 
 from utils import (
     load_planning_log,
     read_graph_from_path,
     compute_goal_similarity,
     print_to_planning_log,
-    get_verbose_scene_graph
+    get_verbose_scene_graph,
+    print_red,
+    print_green,
+    print_yellow,
+    print_blue,
+    print_magenta,
+    print_cyan
 )
 from grounding import verify_groundability
 
@@ -33,6 +39,7 @@ def run_pipeline_CM(
 ):
 
     # SETUP #
+    print_blue("\n#########\n# SETUP #\n#########")
     scene_graph = read_graph_from_path(Path(scene_graph_file_path))
     extracted_scene_graph = get_verbose_scene_graph(scene_graph, as_string=False)
     extracted_scene_graph_str = get_verbose_scene_graph(scene_graph, as_string=True)
@@ -43,10 +50,22 @@ def run_pipeline_CM(
     with open(os.path.join(results_dir, "extracted_scene_graph.txt"), "w") as file:
         file.write(extracted_scene_graph_str)
 
-    planning_succesful = False
-    iteration = 0
+        
+    # Initialize workflow variables
+    planning_succesful = False 
+    grounding_succesful = False
+
+    grounding_error_log = None
+    pddlenv_error_log = None
+    planner_error_log = None
+
+    iteration = 0 # Iteration counter of the outer loop
+    refinements_per_iteration = [] # Output data: number of inner loop iterations per outer loop iteration
+    goals = [current_goal] # Output data: all relaxed goals
+
+
     while iteration < WORKFLOW_ITERATIONS:
-        print(f"\n\n\n\n#########################\n# Main loop iteration {iteration} out of {WORKFLOW_ITERATIONS} #\n#########################\n\n")
+        print_blue(f"\n##################################\n# Main loop iteration {iteration} out of {WORKFLOW_ITERATIONS} #\n##################################\n")
 
         # Create iteration directory
         iteration_dir = os.path.join(results_dir, f"iteration_{iteration}")
@@ -62,7 +81,7 @@ def run_pipeline_CM(
         
 
         
-        print("\n\n\n#########################\nGENERATING PROBLEM\n#########################\n\n\n")
+        print_yellow("\n######################\n# GENERATING PROBLEM #\n######################")
         
         problem = generate_problem(
             domain_file_path=domain_file_path, 
@@ -80,25 +99,25 @@ def run_pipeline_CM(
         plan, pddlenv_error_log, planner_error_log = plan_with_output(domain_file_path, problem_dir, plan_file_path)      
 
 
-
+        PDDL_loop_iteration = 0
         if plan is None:
 
             # PDDL REFINEMENT LOOP #
+            print_magenta("\n\t#########################\n\t# PDDL REFINEMENT LOOP #\n\t#########################")
 
-            PDDL_loop_iteration = 0
             while PDDL_loop_iteration < PDDL_GENERATION_ITERATIONS:
-                print(f"\n\n\t#######################\n\t# Problem refinement loop iteration {PDDL_loop_iteration} out of {PDDL_GENERATION_ITERATIONS} \n\t#########################\n\n")
-                print(f"\n\n\tProblem directory: {problem_dir}\n\n")
+                print_magenta(f"\n\t################################################\n\t# Problem refinement loop iteration {PDDL_loop_iteration} out of {PDDL_GENERATION_ITERATIONS} #\n\t################################################\n")
+                print(f"\n\tProblem directory: {problem_dir}\n")
                 
 
                 planning_succesful = plan is not None
                 if planning_succesful:
-                    print(f"\n\n\tPlanning successful\n\n")
+                    print_green(f"\n\tPlanning successful\n")
                     break
 
 
                 # PDDL PROBLEM REFINEMENT #
-                print("\n\n\tRefining problem...")
+                print("\n\tRefining problem...")
                 # Refine the problem and return the path to the refined version
                 new_problem = refine_problem(
                     planner_output_file_path, 
@@ -110,7 +129,8 @@ def run_pipeline_CM(
                     workflow_iteration=iteration,
                     refinement_iteration=PDDL_loop_iteration,
                     pddlenv_error_log=pddlenv_error_log,
-                    planner_error_log=planner_error_log
+                    planner_error_log=planner_error_log,
+                    grounding_error_log=grounding_error_log
                 )
 
 
@@ -138,13 +158,19 @@ def run_pipeline_CM(
                 
                 # Attempt planning with refined problem
                 plan, pddlenv_error_log, planner_error_log = plan_with_output(domain_file_path, problem_dir, plan_file_path)      
+        else:
+            planning_succesful = True
+            pddlenv_error_log = None
+            planner_error_log = None
 
+        # Record the refinements for each iteration
+        refinements_per_iteration.append(PDDL_loop_iteration)
 
         # GROUNDING #
 
         if plan is not None:       
-            print("Grounding started...")
-            grounding_success_percentage, failure_object, failure_room = verify_groundability(
+            print_cyan("\nGrounding started...")
+            grounding_success_percentage, grounding_error_log = verify_groundability(
                 plan, 
                 extracted_scene_graph, 
                 domain_file_path=domain_file_path, 
@@ -155,46 +181,37 @@ def run_pipeline_CM(
                 initial_robot_location=initial_robot_location
             )
             
-            print(grounding_success_percentage, " ", failure_object, " ", failure_room)
+            print_cyan(f"{grounding_success_percentage} {grounding_error_log}")
+
+            grounding_succesful = grounding_success_percentage == 1
 
             # If we achieved 100% grounding success, we can break the loop as we correctly achieved the original goal
-            if grounding_success_percentage == 1:
+            if grounding_succesful:
+                grounding_error_log = None
                 break
+
 
 
         # GOAL RELAXATION #
 
-        print("Grounding not successful. Performing goal reasoning...")
-
-        # Initialize the goal reasoner
-        print("Creating GoalReasoner instance...")
-        reasoner = GoalReasoner(api_key)
+        print_red("\nGrounding not successful. Performing goal relaxation...") 
         
-        # Load the file in planner/experiments/experiment_3/logs/pddl_ai.log
-        planning_log = load_planning_log(os.path.join(results_dir,"logs","pddl_ai.log"))
-        
-        print("Performing goal reasoning...")
-        # Reason about the goal
-        action_modifications, goal_relaxation = reasoner.reason_about_goal(
-            GOAL, 
-            extracted_scene_graph_str,
-            planning_log, 
-            domain_file_path, 
-            problem_file_path, 
-            last_planning_succesful = planning_succesful, 
-            output_dir = iteration_dir
-        )       
-                    
-        #TODO: goal relaxation
+        # Find alternative objects
+        alternatives, current_goal = dict_replaceable_objects(extracted_scene_graph_str, current_goal, workflow_iteration=iteration, logs_dir=logs_dir)
+        print(alternatives)
+        print(current_goal)
 
-        # Write the relaxed goal to goal_file_path, where we replace .txt with _final.txt
-        final_goal_file_path = goal_file_path.replace(".txt", "_final.txt")
-        with open(final_goal_file_path, "w") as file:
-            file.write(new_goal)
-            # Write similarity in the next row
-            file.write(f"Similarity: \n{goal_similarity}")
+        # Generate new goal
+        current_goal = relax_goal(extracted_scene_graph_str, current_goal)
 
+
+        # Record relaxed goal
+        goals.append(current_goal)
+
+
+        # Prepare next iteration
         iteration += 1
-        raise
+
+    
     # Return the final problem and plan
-    return problem_file_path, plan_file_path
+    return problem_file_path, plan_file_path, current_goal, planning_succesful, grounding_succesful, iteration, refinements_per_iteration, goals

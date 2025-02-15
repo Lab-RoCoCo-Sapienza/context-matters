@@ -20,19 +20,20 @@ def local_llm_call(prompt, question):
     return response.json()['response']
 
     
-def llm_call(prompt, question):
-    completion = client.chat.completions.create(
-    model="gpt-4o",
-    messages=[
-        {"role": "system", "content": f"{prompt}"},
-        {
-            "role": "user",
-            "content": question
-        }
-    ],
-    temperature=0.1,
-    top_p=1,
-    )
+def llm_call(prompt, question, temperature=None, top_p=None):
+    completion_args = {
+        "model": "gpt-4o",
+        "messages": [
+            {"role": "system", "content": f"{prompt}"},
+            {"role": "user", "content": question}
+        ]
+    }
+    if temperature is not None:
+        completion_args["temperature"] = temperature
+    if top_p is not None:
+        completion_args["top_p"] = top_p
+
+    completion = client.chat.completions.create(**completion_args)
 
     return (completion.choices[0].message.content)
 
