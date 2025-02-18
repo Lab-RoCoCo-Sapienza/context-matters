@@ -3,6 +3,7 @@ import json
 from pprint import pprint
 from pathlib import Path
 import subprocess
+import re
 
 from pddlgym.core import InvalidAction
 
@@ -388,48 +389,99 @@ def check_state_consistency(final_state, initial_state):
     return final_state.literals == initial_state.literals
 
 
+def translate_plan(input_file, output_file):
+    # Step 1: Read the input file
+    with open(input_file, 'r') as file:
+        plan_content = file.read().strip()
+
+    # Step 2: Extract actions using regex
+    pattern = re.compile(r'(\w+)\((.*?)\)')
+    matches = pattern.findall(plan_content)
+
+    translated_plan = []
+    for action, params in matches:
+        # Extract arguments and strip types (remove everything after ':')
+        args = [arg.split(':')[0] for arg in params.split(',')]
+        translated_action = f"({action} {' '.join(args)})"
+        translated_plan.append(translated_action)
+
+    # Step 3: Write to the output file
+    with open(output_file, 'w') as file:
+        file.write('\n'.join(translated_plan))
+
+    print(f"Plan successfully translated and written to {output_file}")
+
 def VAL_validate(domain_file_path, problem_file_path, plan_path):
-    """
-    Validates a plan using the VAL tool.
-
-    Args:
-        domain_file_path: The path to the domain file.
-        problem_file_path: The path to the problem file.
-        plan_path: The path to the plan file.
-
-    Returns:
-        The output of the VAL tool.
-    """
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     validate_path = os.path.join(BASE_DIR, "third-party", "VAL", "build", "linux64", "Release", "bin", "Validate")
     command = [validate_path, "-v", domain_file_path, problem_file_path, plan_path]
     
     result = subprocess.run(command, capture_output=True, text=True)
-    print(result.stdout)
+    output_text = result.stdout
 
-    raise
+    # Parse the validation output
+    validation_successful = False
+    #goal_satisfied = False
+    #type_checking_str = None
+    #validation_process_str = None
+    #plan_repair_advice = None
+
+    # Check for a successful plan validation
+    if "Plan valid" in output_text:
+        validation_successful = True
+        goal_satisfied = True  # If the plan is valid, the goal is satisfied
+
+    # Check if goal is explicitly not satisfied
+    #if "Goal not satisfied" in output_text:
+    #    goal_satisfied = False
+#
+    ## Extract type-checking section
+    #type_check_match = re.search(r"(Type-checking.*?passes type checking\.)+", output_text, re.DOTALL)
+    #if type_check_match:
+    #    type_checking_str = type_check_match.group().strip()
+#
+    ## Extract validation process logs
+    #validation_process_match = re.search(r"Checking plan:.*?Plan executed successfully.*?", output_text, re.DOTALL)
+    #if validation_process_match:
+    #    validation_process_str = validation_process_match.group().strip()
+#
+    ## Extract plan repair advice if the plan is invalid
+    #repair_match = re.search(r"Plan Repair Advice:\n\n(.*?)\n\nFailed plans:", output_text, re.DOTALL)
+    #if repair_match:
+    #    plan_repair_advice = repair_match.group(1).strip()
+
+    return validation_successful, output_text
+
 
 def VAL_ground(domain_file_path, problem_file_path):
-    """
-    Grounds a domain and problem file using the VAL tool.
-
-    Args:
-        domain_file_path: The path to the domain file.
-        problem_file_path: The path to the problem file.
-
-    Returns:
-        The output of the VAL tool.
-    """
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     validate_path = os.path.join(BASE_DIR, "third-party", "VAL", "build", "linux64", "Release", "bin", "Instantiate")
     command = [validate_path, domain_file_path, problem_file_path]
     
     result = subprocess.run(command, capture_output=True, text=True)
-    print(result.stdout)
+    
+    output_text = result.stdout
 
-    raise
+    if "Errors Encountered" in output_text:
+        return False, output_text
+    else:
+        return True, ""
 
-def VAL_parse()
+def VAL_parse(domain_file_path, problem_file_path=None):
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    validate_path = os.path.join(BASE_DIR, "third-party", "VAL", "build", "linux64", "Release", "bin", "Parser")
+    command = [validate_path, domain_file_path]
+    if problem_file_path:
+        command.append(problem_file_path)
+    
+    result = subprocess.run(command, capture_output=True, text=True)
+    result_str = result.stdout.strip().split("\n")
+    #print(result_str)
+
+    if "Errors: 0" in result_str[-1]:
+        return True, ""
+    else:    
+        return False, result_str[-1]
 
 if __name__ == "__main__":
 

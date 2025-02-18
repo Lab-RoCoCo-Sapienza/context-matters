@@ -20,9 +20,9 @@ def local_llm_call(prompt, question):
     return response.json()['response']
 
     
-def llm_call(prompt, question, temperature=None, top_p=None):
+def llm_call(prompt, question, temperature=None, top_p=None, model="gpt-4o"):
     completion_args = {
-        "model": "gpt-4o",
+        "model": model,
         "messages": [
             {"role": "system", "content": f"{prompt}"},
             {"role": "user", "content": question}

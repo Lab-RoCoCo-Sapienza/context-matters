@@ -21,14 +21,23 @@ from utils import (
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATASET_DIR = os.path.join(BASE_DIR, "dataset")
 
-def run_delta(selected_dataset_splits, GENERATE_DOMAIN = True):
+def run_delta(selected_dataset_splits, GENERATE_DOMAIN = True, GROUND_IN_SCENE_GRAPH = False, MODEL = "gpt-4o"):
     print_blue("Running delta...")
     # Create a timestamp for the results folder
     timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
 
-    experiment_name = "delta"
+    # Compose experiment_name
+    experiment_name = f"delta_{MODEL}"
+
     if GENERATE_DOMAIN:
         experiment_name += "_gendomain"
+    else:
+        experiment_name += "_NOgendomain"
+    
+    if GROUND_IN_SCENE_GRAPH:
+        experiment_name += "_groundsg"
+    else:
+        experiment_name += "_NOgroundsg"
 
     RESULTS_DIR = os.path.join(BASE_DIR, "results", experiment_name, timestamp)
     
@@ -129,7 +138,9 @@ def run_delta(selected_dataset_splits, GENERATE_DOMAIN = True):
                         problem_id = problem_id,
                         results_dir=results_problem_dir,
                         domain_file_path = domain_file_path,
-                        domain_description = domain_description
+                        domain_description = domain_description,
+                        GROUND_IN_SCENE_GRAPH = GROUND_IN_SCENE_GRAPH,
+                        model = MODEL
                     )
 
 
@@ -157,7 +168,11 @@ def run_delta(selected_dataset_splits, GENERATE_DOMAIN = True):
                             writer = csv.writer(f, delimiter='|')
                             writer.writerow([task_dir_name, scene_name, problem_id, planning_succesful, grounding_succesful, "", ""])
 
-                    print_green("Pipeline delta completed successfully. Planning succesful: " + str(planning_succesful) + " Grounding succesful: " + str(grounding_succesful))
+                    if planning_succesful and grounding_succesful:
+                        print_green("Pipeline delta completed successfully. Planning succesful: " + str(planning_succesful) + " Grounding succesful: " + str(grounding_succesful))
+                    else:
+                        print_red("Pipeline delta completed with issues. Planning succesful: " + str(planning_succesful) + " Grounding succesful: " + str(grounding_succesful))
+                
                 except Exception as e:
                     print_red(f"Exception occurred: {str(e)}")
                     traceback.print_exc()
@@ -174,4 +189,4 @@ if __name__ == "__main__":
     DATASET_SPLITS = [
         "dining_setup"
     ]
-    run_delta(DATASET_SPLITS, GENERATE_DOMAIN = False)
+    run_delta(DATASET_SPLITS, GENERATE_DOMAIN = True, GROUND_IN_SCENE_GRAPH = False, MODEL = "gpt-4o")

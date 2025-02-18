@@ -3,6 +3,7 @@ from pprint import pprint
 import pddlgym
 from pddlgym.core import PDDLEnv
 from pddlgym_planners.fd import FD
+import traceback
 
 FAST_DOWNWARD_PATH = "downward/fast-downward.py"
 
@@ -13,21 +14,26 @@ def run_planner_FD(domain_file_path, problem_dir, env=None):
     if env is None:
         try:
             # Create PDDLEnv
-            env = PDDLEnv(domain_file_path, problem_dir, operators_as_actions = True)
+            env = PDDLEnv(domain_file_path, problem_dir, operators_as_actions=True)
         except Exception as e:
-            print("Exception in PDDLEnv: "+str(e))
+            print("Exception in PDDLEnv: " + str(e))
+            traceback.print_exc()
             return None, str(e), None
 
     # Use only first problem in directory
-    env.fix_problem_index(0)
+    #env.fix_problem_index(0)
     
+
     try:
         # Reset environment
-        obs,  debug_info = env.reset()
+        obs, debug_info = env.reset()
     except Exception as e:
-        print("Exception in PDDLEnv reset: "+str(e))
+        print("Exception in PDDLEnv reset: " + str(e))
+        traceback.print_exc()
         return None, str(e), None
         
+    print(env.get_state())
+
     # Create planner
     planner = FD()
 
@@ -35,7 +41,8 @@ def run_planner_FD(domain_file_path, problem_dir, env=None):
     try:
         plan = planner(env.domain, obs)
     except Exception as e:
-        print("Exception in FD planner: "+str(e))
+        print("Exception in FD planner: " + str(e))
+        traceback.print_exc()
         return None, None, str(e)
 
     return plan, None, None

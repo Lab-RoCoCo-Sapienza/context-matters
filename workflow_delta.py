@@ -10,12 +10,12 @@ from pprint import pprint
 from agent import llm_call
 from planner import plan_with_output
 from pddlgym.core import PDDLEnv
-from pddl_verification import verify_groundability_in_scene_graph, convert_JSON_to_locations_dictionary, VAL_validate, VAL_parse, VAL_ground
+from pddl_verification import verify_groundability_in_scene_graph, convert_JSON_to_locations_dictionary, VAL_validate, VAL_parse, VAL_ground, translate_plan
 
 from pddl_generation import _save_prompt_response
 
 
-def generate_pddl_domain(task_file, domain_description, logs_dir=None):
+def generate_pddl_domain(task_file, domain_description, logs_dir=None, model="gpt-4o"):
     print_blue("Generating PDDL domain...")
 
     prompt = """
@@ -80,6 +80,7 @@ def generate_pddl_domain(task_file, domain_description, logs_dir=None):
     Extract new object types and actions from the following description and generate a corresponding PDDL domain file.
 
     <task>
+    
     A new domain has the following new object types and actions.
 
     <domain_description>
@@ -91,9 +92,9 @@ def generate_pddl_domain(task_file, domain_description, logs_dir=None):
     task_description = Path(task_file).read_text()
     question = question.replace("<task>", task_description)
 
-    question = question.replace("<domain_description>", domain_description)
+    question = question.replace("<domain_description>", str(domain_description))
 
-    answer = llm_call(prompt, question)
+    answer = llm_call(prompt, question, model=model)
 
     # Save prompts and response
     _save_prompt_response(
@@ -109,7 +110,7 @@ def generate_pddl_domain(task_file, domain_description, logs_dir=None):
     return domaind_pddl
 
 
-def prune_scene_graph(scene_graph_path, goal_description_path, initial_robot_location=None, logs_dir=None):
+def prune_scene_graph(scene_graph_path, goal_description_path, initial_robot_location=None, logs_dir=None, model="gpt-4o"):
     print_blue("Pruning Scene Graph...")
     
     prompt = """
@@ -231,12 +232,12 @@ def prune_scene_graph(scene_graph_path, goal_description_path, initial_robot_loc
 
 
     # Esegui il pruning
-    pruned_sg = llm_call(prompt, question)
+    pruned_sg = llm_call(prompt, question, model=model)
 
     # Remove ```json and ``` from the response
     pruned_sg = pruned_sg.replace("`", "").replace("json", "").replace("lisp", "")
 
-    pprint(pruned_sg)
+    #pprint(pruned_sg)
 
     # Parse the graph into json
     pruned_sg = json.loads(pruned_sg)
@@ -252,7 +253,7 @@ def prune_scene_graph(scene_graph_path, goal_description_path, initial_robot_loc
     
     return pruned_sg
 
-def generate_pddl_problem(pruned_scene_graph, goal_description_path, domain_pddl_path, initial_robot_location=None, logs_dir=None):
+def generate_pddl_problem(pruned_scene_graph, goal_description_path, domain_pddl_path, initial_robot_location=None, logs_dir=None, model="gpt-4o"):
     print_blue("Generating PDDL problem...")
 
     prompt = """
@@ -260,7 +261,7 @@ def generate_pddl_problem(pruned_scene_graph, goal_description_path, domain_pddl
     you can generate a PDDL problem file.
     We support the following subset of PDDL1.2:
         STRIPS
-        Typing (excluding hierarchical)
+        Typing
         Quantifiers (forall, exists)
         Disjunctions (or)
         Equality
@@ -360,6 +361,7 @@ def generate_pddl_problem(pruned_scene_graph, goal_description_path, domain_pddl
                 room locatable - object
                 robot grabbable bin - locatable
                 disposable mop - grabbable
+
             )
 
             (:predicates
@@ -419,11 +421,11 @@ def generate_pddl_problem(pruned_scene_graph, goal_description_path, domain_pddl
         (:domain house-cleaning-domain)
 
             (:objects
-                robot - agent
+                robot - robot
                 kitchen_2 living_room_1 - room
-                mop_11 - item
-                bucket_13 - item
-                glass_15 - item
+                mop_11 - mop
+                bucket_13 - grabbable
+                glass_15 - grabbable
             )
             (:init
                 (at robot kitchen)
@@ -480,7 +482,7 @@ def generate_pddl_problem(pruned_scene_graph, goal_description_path, domain_pddl
     question = question.replace("<domain_pddl>", domain_pddl)
 
     # Esegui la generazione del PDDL del problema
-    answer = llm_call(prompt, question)
+    answer = llm_call(prompt, question, model=model)
 
     # Save prompts and response
     _save_prompt_response(
@@ -495,7 +497,7 @@ def generate_pddl_problem(pruned_scene_graph, goal_description_path, domain_pddl
 
     return problem_pddl
 
-def decompose_pddl_goal(problem_pddl_path, domain_pddl_path, initial_robot_location=None, logs_dir=None):
+def decompose_pddl_goal(problem_pddl_path, domain_pddl_path, initial_robot_location=None, logs_dir=None, model="gpt-4o"):
     print_blue("Decomposing PDDL goal...")
     """
     Scompone gli obiettivi di un file PDDL del problema in una sequenza di sotto-obiettivi (sub-goals).
@@ -505,10 +507,9 @@ def decompose_pddl_goal(problem_pddl_path, domain_pddl_path, initial_robot_locat
     you can decompose the goal states into a sequence of sub-goals.
 
     Example:
-    Given an example_problem.pddl, the goal states can be decomposed into a sequence of example sub-goals. Using the predicates defined in example_domain.pddl, the example subgoals can be formulated as: sub-goal_1.pddl, ..., sub-goal_n.pddl.
+    Given an example_problem.pddl, the goal states can be decomposed into a sequence of EXAMPLE_SUB_GOALS. Using the predicates defined in example_domain.pddl, the example subgoals can be formulated as: sub-goal_1.pddl, ..., sub-goal_n.pddl.
     
-
-
+    
     example_problem.pddl:
         (define (problem house_cleaning)
         (:domain cleaning)
@@ -516,25 +517,20 @@ def decompose_pddl_goal(problem_pddl_path, domain_pddl_path, initial_robot_locat
                 robot - agent
                 kitchen living_room - room
                 mop - item
-                sink - item
-                bucket - item
-                water - liquid
             )
             (:init
-                (agent_at robot kitchen)
-                (has bucket water)
-                (mop_dry mop)
-                (floor_dirty kitchen)
-                (floor_dirty living_room)
+                (at robot kitchen)
+                (dirty-floor kitchen)
+                (dirty-floor living_room)
             )
             (:goal
                 (and
-                    (floor_clean kitchen)
-                    (floor_clean living_room)
+                    (clean-floor kitchen)
+                    (clean-floor living_room)
+                    (is-clean mop)
                 )
             )
         )
-
 
 
     example_domain.pddl:
@@ -547,15 +543,14 @@ def decompose_pddl_goal(problem_pddl_path, domain_pddl_path, initial_robot_locat
 
             (:types
                 room locatable - object
-                robot grabbable bin - locatable
-                disposable mop - grabbable
+                robot grabbable - locatable
+                mop - grabbable
             )
 
             (:predicates
                 (at ?something - locatable ?where - room)
                 (is-holding ?who - robot ?something - grabbable)
                 (is-free ?who - robot)
-                (thrashed ?what - disposable)
                 (is-clean ?what - mop)
                 (is-dirty ?what - mop)
                 (dirty-floor ?what - room)
@@ -580,12 +575,6 @@ def decompose_pddl_goal(problem_pddl_path, domain_pddl_path, initial_robot_locat
                 :effect (and (not (is-holding ?who ?what)) (is-free ?who) (at ?what ?where))
             )
             
-            (:action throw_away
-                :parameters (?who - robot ?what - disposable ?in - bin ?where - room)
-                :precondition (and (at ?who ?where) (is-holding ?who ?what) (at ?in ?where))
-                :effect (and (not (is-holding ?who ?what)) (is-free ?who) (thrashed ?what) (not (at ?what ?where)))
-            )
-            
             (:action mop_floor
                 :parameters (?who - robot ?with - mop ?where - room)
                 :precondition (and (at ?who ?where) (is-holding ?who ?with)
@@ -604,25 +593,40 @@ def decompose_pddl_goal(problem_pddl_path, domain_pddl_path, initial_robot_locat
 
 
 
+    EXAMPLE_SUB_GOALS:
+    <subgoal>
+    (:goal
+        (and
+            (floor-clean kitchen)
+            (is-clean mop)
+        )
+    )
+    <subgoal>
+    (:goal
+        (and
+            (floor-clean kitchen)
+            (is-clean mop)
+        )
+    )
+    
+
+
     sub-goal_1.pddl:
         (define (problem sub-goal-1)
             (:domain cleaning)
             (:objects
                 robot - agent
-                room - room
+                kitchen living_room - room
                 mop - item
-                bucket - container
-                water - liquid
             )
             (:init
-                (agent_at robot kitchen)
-                (has bucket water)
-                (mop_dry mop)
-                (floor_dirty room)
+                (at robot kitchen)
+                (dirty-floor kitchen)
             )
             (:goal
                 (and
-                    (mop_wet mop)
+                    (floor-clean kitchen)
+                    (is-clean mop)
                 )
             )
         )
@@ -633,20 +637,18 @@ def decompose_pddl_goal(problem_pddl_path, domain_pddl_path, initial_robot_locat
             (:domain cleaning)
             (:objects
                 robot - agent
-                room - room
+                kitchen living_room - room
                 mop - item
-                bucket - container
-                water - liquid
             )
             (:init
-                (agent_at room)
-                (has bucket water)
-                (mop_wet mop)
-                (floor_dirty room)
+                (at robot kitchen)
+                (is-clean mop)
+                (dirty-floor living_room)
             )
             (:goal
                 (and
-                    (floor_clean room)
+                    (dirty-floor living_room)
+                    (is-clean mop)
                 )
             )
         )
@@ -672,14 +674,14 @@ def decompose_pddl_goal(problem_pddl_path, domain_pddl_path, initial_robot_locat
         The robot is initially located in robot location '{initial_robot_location}', therefore the first generated subgoal should reflect this.
         """
 
-    prompt += """    
-    The subsequent subgoals should reflect the intermediate states of the goal.
+    prompt += """
     Your answer should be a collection of readily usable as a PDDL problems.
     Write only the PDDL problems, separated ONLY by the <subgoal> tag, WITHOUT ANY ADDITIONAL TEXT.
+    The sub-goals should be readily parsable by a PDDL validator, without errors.
     """
 
     # Esegui la generazione dei sub-goal PDDL
-    answer = llm_call(prompt, question)
+    answer = llm_call(prompt, question, model=model)
 
     # Save prompts and response
     _save_prompt_response(
@@ -716,7 +718,8 @@ def run_pipeline_delta(
     results_dir,
     domain_file_path = None,
     domain_description = None,
-    GROUND_IN_SCENE_GRAPH = False
+    GROUND_IN_SCENE_GRAPH = False,
+    model = "gpt-4o"
 ):
     logs_dir = os.path.join(results_dir, "logs")
     os.makedirs(logs_dir, exist_ok=True)
@@ -730,7 +733,7 @@ def run_pipeline_delta(
 
         # Run the pipeline
         print_green("\n######################\n# GENERATING PDDL DOMAIN #\n######################")
-        domain_pddl = generate_pddl_domain(goal_file_path, domain_description, logs_dir=logs_dir)
+        domain_pddl = generate_pddl_domain(goal_file_path, domain_description, logs_dir=logs_dir, model=model)
 
         # Save the generated PDDL domain
         domain_file_path = os.path.join(results_dir, "domain.pddl")
@@ -748,7 +751,7 @@ def run_pipeline_delta(
 
 
     print_cyan("\n######################\n# PRUNING SCENE GRAPH #\n######################")
-    pruned_sg = prune_scene_graph(scene_graph_file_path, goal_file_path, initial_robot_location, logs_dir=logs_dir)
+    pruned_sg = prune_scene_graph(scene_graph_file_path, goal_file_path, initial_robot_location, logs_dir=logs_dir, model=model)
 
     # Save the pruned scene graph
     pruned_sg_path_readable = os.path.join(results_dir, "pruned_sg.txt")
@@ -761,7 +764,7 @@ def run_pipeline_delta(
     
 
     print_yellow("\n######################\n# GENERATING PDDL PROBLEM #\n######################")
-    problem_pddl = generate_pddl_problem(pruned_sg_path_npz, goal_file_path, domain_file_path, initial_robot_location, logs_dir=logs_dir)
+    problem_pddl = generate_pddl_problem(pruned_sg_path_npz, goal_file_path, domain_file_path, initial_robot_location, logs_dir=logs_dir, model=model)
     
     # Save the generated PDDL problem
     problem_pddl_path = os.path.join(results_dir, "problem.pddl")
@@ -780,8 +783,7 @@ def run_pipeline_delta(
 
 
     print_magenta("\n######################\n# GENERATING PDDL SUB-GOALS #\n######################")
-    sub_goals_pddl = decompose_pddl_goal(problem_pddl_path, domain_file_path, initial_robot_location, logs_dir=logs_dir)
-
+    sub_goals_pddl = decompose_pddl_goal(problem_pddl_path, domain_file_path, initial_robot_location, logs_dir=logs_dir, model=model)
 
 
     print_blue("\n######################\n# PLANNING AND GROUNDING AUTOREGRESSIVE #\n######################")
@@ -801,41 +803,110 @@ def run_pipeline_delta(
     
     
     # Evaluate the sequence of sub-goals
-    # 1) Try grounding each subgoal
-    # 2) Verify if its initial conditions coincide with the final conditions of the previous subgoal
+    # 1) Replace the :object and :init sections of each subgoal with the goal state of the prev subgoal (or the initial state of the non-decomposed problem)
+    # 2) Generate a plan
+    # 3) [OPTIONAL] Ground the plan in the scene graph
     for i, sub_goal in enumerate(sub_goals_pddl):
         grounding_succesful = False
         planning_succesful = False
 
         sub_goal_dir = os.path.join(results_dir, f"sub_goal_{i+1}")
         sub_goal_file = os.path.join(sub_goal_dir, f"sub_goal_{i+1}.pddl")
+
+
+        # If this is the first iteration (old_pddl_env is None), use the PDDLEnv of the main (non-decomposed problem) to get the initial state of the first subgoal
+        if old_pddl_env is None:            
+            old_pddl_env = PDDLEnv(domain_file_path, results_dir, operators_as_actions=True)
+            old_pddl_env.reset()
+
+
+        # Get the final state of the previous environment
+        obs = old_pddl_env.get_state()
+
+        # Extract PDDL objects
+        pddl_objects = []
+        pddl_objects_str = "(:objects\n"
+        for obj in obs.objects:
+            obj = str(obj).split(":")
+            pddl_objects.append((obj[0], obj[1]))
+            pddl_objects_str += f"    {obj[0]} - {obj[1]}\n"
+        pddl_objects_str += ")\n\n"
+
+        #print(pddl_objects_str)
+        
+
+        # Extract PDDL predicates        
+        state = obs.literals
+
+        pddl_predicates = []
+        pddl_predicates_str = "(:init\n"
+        for literal in state:
+            predicate_name = literal.predicate.name
+            predicate_variables = []
+            for variable in literal.variables:
+                predicate_variables.append(variable.split(":")[0])
+            pddl_predicates_str += f"    ({predicate_name} {' '.join(predicate_variables)})\n"
+            pddl_predicates.append((predicate_name, *predicate_variables))
+        pddl_predicates_str += ")\n\n"
+
+        #print(pddl_predicates_str)
+        
+
+        # In the sub-goal problem file, replace the :objects and :init sections with the goal state of the previous sub-goal
+        sub_goal_pddl = open(sub_goal_file, "r").read()
+        
+        # Replace the whole of the :objects and :init sections of the sub-goal with the goal state of the previous sub-goal
+        sub_goal_pddl = sub_goal_pddl.replace(sub_goal_pddl[sub_goal_pddl.index("(:objects"):sub_goal_pddl.index("(:init")], pddl_objects_str)
+        sub_goal_pddl = sub_goal_pddl.replace(sub_goal_pddl[sub_goal_pddl.index("(:init"):sub_goal_pddl.index("(:goal")], pddl_predicates_str)
+
+        #print(sub_goal_pddl)
+
+        # Save the modified sub-goal
+        with open(sub_goal_file, "w") as f:
+            f.write(sub_goal_pddl)
+
         # Initialize env
         new_pddl_env = PDDLEnv(domain_file_path, sub_goal_dir, operators_as_actions=True)
 
-        # Compare envs to check that their initial conditions coincide
-        if old_pddl_env is not None:
-            envs_coincide = new_pddl_env.initial_state == old_pddl_env.initial_state
-        
-            # Return with both planning successful and grounding successful set to False
-            if not envs_coincide:
-                break
-        
+
         output_plan_file_path = os.path.join(sub_goal_dir, f"plan_{i+1}.txt")
 
         # Compute plan on env
         plan, pddlenv_error_log, planner_error_log = plan_with_output(domain_file_path, sub_goal_dir, output_plan_file_path, env=new_pddl_env)
-        
-        # Convert the scene graph into a format readable by the grounder
-        extracted_locations_dictionary = convert_JSON_to_locations_dictionary(pruned_sg)
+        print(plan)
+        print(pddlenv_error_log)
+        print(planner_error_log)
 
-        if plan is not None:       
-            print_cyan("\nGrounding started...")
+        if plan is not None and plan:       
+
+            planning_succesful = True
             
-            # Use VAL to just validate the plan
-            val_succesful, val_log = VAL_validate(domain_file_path, sub_goal_dir, output_plan_file_path)
+            translated_plan_path = os.path.join(sub_goal_dir, f"translated_plan_{i+1}.txt")
+
+            # Translate the plan into a format parsable by VAL
+            translate_plan(output_plan_file_path, translated_plan_path)
+
+            print_cyan("\nVAL validation...")
+            # Use VAL to validate the plan
+            val_succesful, val_log = VAL_validate(domain_file_path, sub_goal_file, translated_plan_path)
+            print_cyan(f"\tresult: {val_succesful} {val_log}")
+
+            print_cyan("\nVAL grounding...")
+            # Use VAL to ground the plan
+            val_ground_succesful, val_ground_log = VAL_ground(domain_file_path, sub_goal_file)
+            print_cyan(f"\tresult: {val_ground_succesful} {val_ground_log}")
+
+            grounding_succesful = val_succesful and val_ground_succesful
+
+            current_stage = "GROUNDING:SUBGOAL_"+str(i)
 
             # If this experiment requires it, try grounding the plan in the real scene graph
-            if GROUND_IN_SCENE_GRAPH:
+            if grounding_succesful and GROUND_IN_SCENE_GRAPH:
+                print_cyan("\nGrounding in scene graph started...")
+
+                # Convert the scene graph into a format readable by the grounder
+                extracted_locations_dictionary = convert_JSON_to_locations_dictionary(pruned_sg)
+
                 grounding_success_percentage, grounding_error_log = verify_groundability_in_scene_graph(
                     plan, 
                     None, 
@@ -853,17 +924,22 @@ def run_pipeline_delta(
 
                 grounding_succesful = grounding_success_percentage == 1
 
-                # If we achieved 100% grounding success, we can break the loop as we correctly achieved the original goal
-                if not grounding_succesful:
-                    plans.append(plan)
-                    return domain_file_path, pruned_sg, problem_pddl_path, sub_goals_file_paths, False, False, None, "PLANNING", planner_error_log
-                    break
+                current_stage = "SCENE_GRAPH_GROUNDING:SUBGOAL_"+str(i)
+
+            # If we achieved 100% grounding success, we can break the loop as we correctly achieved the original goal
+            if not grounding_succesful:
+                plans.append(plan)
+                return domain_file_path, pruned_sg, problem_pddl_path, sub_goals_file_paths, True, False, plans, current_stage, grounding_error_log
+                break
         else:
-            return domain_file_path, pruned_sg, problem_pddl_path, sub_goals_file_paths, False, False, None, "PLANNING", planner_error_log
+            error_log = pddlenv_error_log if pddlenv_error_log is not None else planner_error_log
+            return domain_file_path, pruned_sg, problem_pddl_path, sub_goals_file_paths, False, False, plans, "PLANNING:SUBGOAL_"+str(i), error_log
                 
 
         plans.append(plan)
 
         new_pddl_env = old_pddl_env
 
-    return domain_file_path, pruned_sg, problem_pddl_path, sub_goals_file_paths, planning_succesful, grounding_succesful, plans, reason_for_failure
+        print_cyan(f"Sub-goal {i+1} completed.\n---")
+
+    return domain_file_path, pruned_sg, problem_pddl_path, sub_goals_file_paths, planning_succesful, grounding_succesful, plans, "", ""
