@@ -1,83 +1,118 @@
 {
-  "problem_1": {
-    "description": "Task related to organizing objects",
-    "graph": ["Beechwood","Benevolence","Coffeen","Collierville","Corozal","Cosmos","Darden","Forkland","Hanson","Hiteman","Ihlen","Klickitat","Lakeville","Leonardo","Lindenwood","Markleeville","Marstons"],
-    "goal": "Gather all plastic objects in the kitchen.",
-    "objects": {
-      "objects": ["bottle", "chair", "spoon", "cup", "bowl","paper bin","plastic bin", "glass bin", "organic bin",  "toothbrush", "container", "basket", "fork", "lamp", "remote", "pen", "box", "toy", "glasses", "plate", "bag", "comb", "scissors", "hanger"]
+  "problems": {
+    "problem_1": {
+      "description": "Task related to organizing objects",
+      "graph": ["Beechwood","Benevolence","Coffeen","Collierville","Corozal","Cosmos","Darden","Forkland","Hanson","Hiteman","Ihlen","Klickitat","Lakeville","Leonardo","Lindenwood","Markleeville","Marstons"],
+      "goal": "Gather all plastic objects in the kitchen.",
+      "objects": {
+        "objects": ["bottle", "chair", "spoon", "cup", "bowl","paper bin","plastic bin", "glass bin", "organic bin",  "toothbrush", "container", "basket", "fork", "lamp", "remote", "pen", "box", "toy", "glasses", "plate", "bag", "comb", "scissors", "hanger"]
+      }
+    },
+    "problem_2": {
+      "description": "Task related to organizing objects",
+      "graph": ["Beechwood","Benevolence","Coffeen","Collierville","Corozal","Cosmos","Darden","Forkland","Hanson","Hiteman","Ihlen","Klickitat","Lakeville","Leonardo","Lindenwood","Markleeville","Marstons"],
+      "goal": "Gather all blue objects in the living room.",
+      "objects": {
+        "objects": ["notebook", "book", "pencil", "bottle","paper bin","plastic bin", "glass bin", "organic bin",  "cup", "keyboard", "mouse", "monitor", "cushion", "backpack", "marker", "eraser", "mirror", "lamp", "blanket", "ball", "socks", "wallet", "headphones", "phone case"]
+      }
+    },
+    "problem_3": {
+      "description": "Task related to waste sorting",
+      "graph": ["Beechwood","Benevolence","Coffeen","Collierville","Corozal","Cosmos","Darden","Forkland","Hanson","Hiteman","Ihlen","Klickitat","Lakeville","Leonardo","Lindenwood","Markleeville","Marstons"],
+      "goal": "Sort waste into plastic, paper, glass, and organic bins.",
+      "objects": {
+        "objects": ["newspaper", "milk carton", "paper bin","plastic bin", "glass bin", "organic bin", "glass jar", "banana peel", "plastic bag", "cardboard box", "aluminum can", "water bottle", "egg shell", "styrofoam cup", "plastic wrap", "tin can", "bread crust", "paper plate", "cereal box", "yogurt container", "apple core", "tea bag", "plastic straw", "wooden spoon"]
+      }
+    },
+    "problem_4": {
+      "description": "Task related to waste sorting",
+      "graph": ["Beechwood","Benevolence","Coffeen","Collierville","Corozal","Cosmos","Darden","Forkland","Hanson","Hiteman","Ihlen","Klickitat","Lakeville","Leonardo","Lindenwood","Markleeville","Marstons"],
+      "goal": "Throw paper waste into the paper bin.",
+      "objects": {
+        "objects": ["newspaper", "envelope", "magazine","paper bin","plastic bin", "glass bin", "organic bin",  "cardboard", "paper towel", "notebook", "receipt", "flyer", "postcard", "sticky notes", "paper bag", "greeting card", "brochure", "milk carton", "calendar", "index card", "origami", "ticket", "wrapping paper", "blueprint"]
+      }
+    },
+    "problem_5": {
+      "description": "Task related to object placement",
+      "graph": ["Beechwood","Benevolence","Coffeen","Collierville","Corozal","Cosmos","Darden","Forkland","Hanson","Hiteman","Ihlen","Klickitat","Lakeville","Leonardo","Lindenwood","Markleeville","Marstons"],
+      "goal": "Move all kitchen-related objects to the kitchen.",
+      "objects": {
+        "objects": ["knife", "spoon", "fork", "plate", "bowl", "cup", "teapot", "blender", "coffee maker", "microwave", "dish rack", "oven mitt", "chopping board", "frying pan", "toaster", "measuring cup", "rolling pin", "kettle", "salt shaker", "pepper grinder"]
+      }
+    },
+    "problem_6": {
+      "description": "Task related to object placement",
+      "graph": ["Beechwood","Benevolence","Coffeen","Collierville","Corozal","Cosmos","Darden","Forkland","Hanson","Hiteman","Ihlen","Klickitat","Lakeville","Leonardo","Lindenwood","Markleeville","Marstons"],
+      "goal": "Place all bedroom-related objects in the bedroom.",
+      "objects": {
+        "objects": ["pillow", "blanket", "bedside lamp", "paper bin","plastic bin", "glass bin", "organic bin", "alarm clock", "stuffed animal", "curtain", "rug", "dresser", "hanger", "wardrobe", "nightstand", "headboard", "sheets", "slippers", "pyjamas", "mirror", "laundry basket", "bookshelf", "photo frame", "window blinds"]
+      }
+    },
+    "problem_7": {
+      "description": "Task related to organizing objects",
+      "graph": ["Beechwood","Benevolence","Coffeen","Collierville","Corozal","Cosmos","Darden","Forkland","Hanson","Hiteman","Ihlen","Klickitat","Lakeville","Leonardo","Lindenwood","Markleeville","Marstons"],
+      "goal": "Sort office supplies on the desk.",
+      "objects": {
+        "objects": ["pen", "desk","pencil", "stapler", "paper bin","plastic bin", "glass bin", "organic bin", "eraser", "scissors", "paper clips", "notebook", "folder", "sticky notes", "glue stick", "ruler", "hole puncher", "tape", "calculator", "marker", "highlighter", "whiteboard", "clipboard", "USB drive", "headphones"]
+      }
+    },
+    "problem_8": {
+      "description": "Task related to object relocation",
+      "graph": ["Beechwood","Benevolence","Coffeen","Collierville","Corozal","Cosmos","Darden","Forkland","Hanson","Hiteman","Ihlen","Klickitat","Lakeville","Leonardo","Lindenwood","Markleeville","Marstons"],
+      "goal": "Move all electronic devices to the bedroom.",
+      "objects": {
+        "objects": ["laptop", "monitor", "keyboard", "mouse", "printer", "scanner", "headphones", "tablet", "smartphone", "router", "external hard drive", "USB hub", "webcam", "game controller", "TV remote", "digital clock", "battery charger", "VR headset", "speaker", "microphone"]
+      }
+    },
+    "problem_9": {
+      "description": "Task related to storage organization",
+      "graph": ["Beechwood","Benevolence","Coffeen","Collierville","Corozal","Cosmos","Darden","Forkland","Hanson","Hiteman","Ihlen","Klickitat","Lakeville","Leonardo","Lindenwood","Markleeville","Marstons"],
+      "goal": "Store all tools in the living room",
+      "objects": {
+        "objects": ["hammer", "screwdriver", "wrench", "pliers", "tape measure", "level", "drill", "saw", "nails", "screws", "toolbox", "gloves", "ladder", "sandpaper", "paintbrush", "chisel", "clamp", "wire cutter", "extension cord", "safety goggles"]
+      }
+    },
+    "problem_10": {
+      "description": "Task related to clothing organization",
+      "graph": ["Beechwood","Benevolence","Coffeen","Collierville","Corozal","Cosmos","Darden","Forkland","Hanson","Hiteman","Ihlen","Klickitat","Lakeville","Leonardo","Lindenwood","Markleeville","Marstons"],
+      "goal": "Fold and organize all clothes in the bedroom",
+      "objects": {
+        "objects": ["shirt", "pants", "sweater", "jacket", "scarf", "gloves", "socks", "underwear", "jeans", "shorts", "dress", "skirt", "tie", "hat", "belt", "boots", "sneakers", "coat", "blazer", "swimsuit"]
+      }
     }
   },
-  "problem_2": {
-    "description": "Task related to organizing objects",
-    "graph": ["Beechwood","Benevolence","Coffeen","Collierville","Corozal","Cosmos","Darden","Forkland","Hanson","Hiteman","Ihlen","Klickitat","Lakeville","Leonardo","Lindenwood","Markleeville","Marstons"],
-    "goal": "Gather all blue objects in the living room.",
-    "objects": {
-      "objects": ["notebook", "book", "pencil", "bottle","paper bin","plastic bin", "glass bin", "organic bin",  "cup", "keyboard", "mouse", "monitor", "cushion", "backpack", "marker", "eraser", "mirror", "lamp", "blanket", "ball", "socks", "wallet", "headphones", "phone case"]
-    }
-  },
-  "problem_3": {
-    "description": "Task related to waste sorting",
-    "graph": ["Beechwood","Benevolence","Coffeen","Collierville","Corozal","Cosmos","Darden","Forkland","Hanson","Hiteman","Ihlen","Klickitat","Lakeville","Leonardo","Lindenwood","Markleeville","Marstons"],
-    "goal": "Sort waste into plastic, paper, glass, and organic bins.",
-    "objects": {
-      "objects": ["newspaper", "milk carton", "paper bin","plastic bin", "glass bin", "organic bin", "glass jar", 
-      "banana peel", "plastic bag", "cardboard box", "aluminum can", "water bottle", "egg shell", "styrofoam cup", "plastic wrap", "tin can", "bread crust", "paper plate", "cereal box", "yogurt container", "apple core", "tea bag", "plastic straw", "wooden spoon"]
-    }
-  },
-  "problem_4": {
-    "description": "Task related to waste sorting",
-    "graph": ["Beechwood","Benevolence","Coffeen","Collierville","Corozal","Cosmos","Darden","Forkland","Hanson","Hiteman","Ihlen","Klickitat","Lakeville","Leonardo","Lindenwood","Markleeville","Marstons"],
-    "goal": "Throw paper waste into the paper bin.",
-    "objects": {
-      "objects": ["newspaper", "envelope", "magazine","paper bin","plastic bin", "glass bin", "organic bin",  "cardboard", "paper towel", "notebook", "receipt", "flyer", "postcard", "sticky notes", "paper bag", "greeting card", "brochure", "milk carton", "calendar", "index card", "origami", "ticket", "wrapping paper", "blueprint"]
-    }
-  },
-  "problem_5": {
-    "description": "Task related to object placement",
-    "graph": ["Beechwood","Benevolence","Coffeen","Collierville","Corozal","Cosmos","Darden","Forkland","Hanson","Hiteman","Ihlen","Klickitat","Lakeville","Leonardo","Lindenwood","Markleeville","Marstons"],
-    "goal": "Move all kitchen-related objects to the kitchen.",
-    "objects": {
-      "objects": ["knife", "spoon", "fork", "plate", "bowl", "cup", "teapot", "blender", "coffee maker", "microwave", "dish rack", "oven mitt", "chopping board", "frying pan", "toaster", "measuring cup", "rolling pin", "kettle", "salt shaker", "pepper grinder"]
-    }
-  },
-  "problem_6": {
-    "description": "Task related to object placement",
-    "graph": ["Beechwood","Benevolence","Coffeen","Collierville","Corozal","Cosmos","Darden","Forkland","Hanson","Hiteman","Ihlen","Klickitat","Lakeville","Leonardo","Lindenwood","Markleeville","Marstons"],
-    "goal": "Place all bedroom-related objects in the bedroom.",
-    "objects": {
-      "objects": ["pillow", "blanket", "bedside lamp", "paper bin","plastic bin", "glass bin", "organic bin", "alarm clock", "stuffed animal", "curtain", "rug", "dresser", "hanger", "wardrobe", "nightstand", "headboard", "sheets", "slippers", "pyjamas", "mirror", "laundry basket", "bookshelf", "photo frame", "window blinds"]
-    }
-  },
-  "problem_7": {
-    "description": "Task related to organizing objects",
-    "graph": ["Beechwood","Benevolence","Coffeen","Collierville","Corozal","Cosmos","Darden","Forkland","Hanson","Hiteman","Ihlen","Klickitat","Lakeville","Leonardo","Lindenwood","Markleeville","Marstons"],
-    "goal": "Sort office supplies on the desk.",
-    "objects": {
-      "objects": ["pen", "desk","pencil", "stapler", "paper bin","plastic bin", "glass bin", "organic bin", "eraser", "scissors", "paper clips", "notebook", "folder", "sticky notes", "glue stick", "ruler", "hole puncher", "tape", "calculator", "marker", "highlighter", "whiteboard", "clipboard", "USB drive", "headphones"]
-    }
-  },
-  "problem_8": {
-    "description": "Task related to object relocation",
-    "graph": ["Beechwood","Benevolence","Coffeen","Collierville","Corozal","Cosmos","Darden","Forkland","Hanson","Hiteman","Ihlen","Klickitat","Lakeville","Leonardo","Lindenwood","Markleeville","Marstons"],
-    "goal": "Move all electronic devices to the bedroom.",
-    "objects": {
-      "objects": ["laptop", "monitor", "keyboard", "mouse", "printer", "scanner", "headphones", "tablet", "smartphone", "router", "external hard drive", "USB hub", "webcam", "game controller", "TV remote", "digital clock", "battery charger", "VR headset", "speaker", "microphone"]
-    }
-  },
-  "problem_9": {
-    "description": "Task related to storage organization",
-    "graph": ["Beechwood","Benevolence","Coffeen","Collierville","Corozal","Cosmos","Darden","Forkland","Hanson","Hiteman","Ihlen","Klickitat","Lakeville","Leonardo","Lindenwood","Markleeville","Marstons"],
-    "goal": "Store all tools in the living room",
-    "objects": {
-      "objects": ["hammer", "screwdriver", "wrench", "pliers", "tape measure", "level", "drill", "saw", "nails", "screws", "toolbox", "gloves", "ladder", "sandpaper", "paintbrush", "chisel", "clamp", "wire cutter", "extension cord", "safety goggles"]
-    }
-  },
-  "problem_10": {
-    "description": "Task related to clothing organization",
-    "graph": ["Beechwood","Benevolence","Coffeen","Collierville","Corozal","Cosmos","Darden","Forkland","Hanson","Hiteman","Ihlen","Klickitat","Lakeville","Leonardo","Lindenwood","Markleeville","Marstons"],
-    "goal": "Fold and organize all clothes in the bedroom",
-    "objects": {
-      "objects": ["shirt", "pants", "sweater", "jacket", "scarf", "gloves", "socks", "underwear", "jeans", "shorts", "dress", "skirt", "tie", "hat", "belt", "boots", "sneakers", "coat", "blazer", "swimsuit"]
-    }
+  "domain": {
+    "actions": [
+      {
+        "name": "move_to",
+        "description": "This action moves a robot from one room to another. Arguments: robot (the robot to be moved), from (the room the robot is currently in), to (the room the robot will move to). Preconditions: the robot must be in the 'from' room. Postconditions: the robot is no longer in the 'from' room and is now in the 'to' room."
+      },
+      {
+        "name": "grab",
+        "description": "This action allows a robot to grab a grabbable object in a room. Arguments: robot (the robot that will grab the object), what (the grabbable object to be grabbed), where (the room where the object is located). Preconditions: the robot and the object must be in the same room, and the robot must be free (not holding anything). Postconditions: the robot is holding the object, and the object is no longer in the room."
+      },
+      {
+        "name": "drop",
+        "description": "This action allows a robot to drop a grabbable object it is holding in a room. Arguments: robot (the robot that will drop the object), what (the grabbable object to be dropped), where (the room where the object will be dropped). Preconditions: the robot must be in the room and holding the object. Postconditions: the robot is no longer holding the object, the robot is free, and the object is now in the room."
+      }
+    ],
+    "objects": [
+      {
+        "type": "room",
+        "description": "A room is a location where actions can take place. Examples include dining room, kitchen, bedroom, etc."
+      },
+      {
+        "type": "locatable",
+        "description": "A locatable object is any object that can be located in a room. This includes robots and grabbable objects."
+      },
+      {
+        "type": "robot",
+        "description": "A robot is an entity that can move between rooms and interact with grabbable objects."
+      },
+      {
+        "type": "grabbable",
+        "description": "A grabbable object is any object that a robot can pick up and move. Examples include pc parts, kitchenware, etc."
+      }
+    ]
   }
 }

@@ -190,10 +190,10 @@ if __name__ == "__main__":
     metrics = compute_metrics_for_splits(DATASET_SPLITS, model="CM")
     
     # Save metrics to JSON
-    save_metrics('/DATA/context-matters/results/metrics.json', metrics)
+    save_metrics('/DATA/context-matters/frozen_results/metrics.json', metrics)
     
     # Define the path to save plots
-    save_path = '/DATA/context-matters/results'
+    save_path = '/DATA/context-matters/frozen_results'
     
     # Plot metrics and save plots
     plot_metrics(metrics, save_path)

@@ -30,6 +30,14 @@ pip install -e
 sudo snap install ollama
 ```
 
+6) Build VAL
+```
+bash third-party/VAL/scripts/linux/build_linux64.sh build Release
+cd third-party/VAL/build/linux64/Release
+make
+```
+
+
 # Run
 ## Dataset creator
 Make sure the virtual environment is activated, then run 

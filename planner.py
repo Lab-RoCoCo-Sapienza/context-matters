@@ -8,14 +8,15 @@ FAST_DOWNWARD_PATH = "downward/fast-downward.py"
 
 
 
-def run_planner_FD(domain_file_path, problem_dir):
+def run_planner_FD(domain_file_path, problem_dir, env=None):
 
-    try:
-        # Create PDDLEnv
-        env = PDDLEnv(domain_file_path, problem_dir, operators_as_actions = True)
-    except Exception as e:
-        print("Exception in PDDLEnv: "+str(e))
-        return None, str(e), None
+    if env is None:
+        try:
+            # Create PDDLEnv
+            env = PDDLEnv(domain_file_path, problem_dir, operators_as_actions = True)
+        except Exception as e:
+            print("Exception in PDDLEnv: "+str(e))
+            return None, str(e), None
 
     # Use only first problem in directory
     env.fix_problem_index(0)
@@ -40,12 +41,12 @@ def run_planner_FD(domain_file_path, problem_dir):
     return plan, None, None
 
 
-def plan_with_output(domain_file_path, problem_dir, plan_file_path):
+def plan_with_output(domain_file_path, problem_dir, plan_file_path, env=None):
 
     # PLANNING #
     
     print("\n\n\tPerforming planning...")
-    plan, pddlenv_error_log, planner_error_log = run_planner_FD(domain_file_path, problem_dir)
+    plan, pddlenv_error_log, planner_error_log = run_planner_FD(domain_file_path, problem_dir, env)
 
     # Save planner output
     with open(plan_file_path, "w") as file:
@@ -100,11 +101,5 @@ def execute_action(env, action):
 
     # Execute action
     obs, reward, done, truncated, debug_info = env.step(action)
-    #print("Action: "+str(action)) 
-    #print("Observation:")
-    #pprint(str(obs))
-    #print("Reward: "+str(reward))
-    #print("Done: "+str(done))
-    #print("Truncated: "+str(truncated))
     
     return env, obs

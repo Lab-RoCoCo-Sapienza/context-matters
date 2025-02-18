@@ -86,7 +86,7 @@ def generate_problem(
 
     problem = llm_call(system_prompt, user_prompt)
     
-                    # Save prompts and response
+    # Save prompts and response
     _save_prompt_response(
         prompt=f"{system_prompt}\n\n{user_prompt}",
         response=problem,
@@ -283,5 +283,5 @@ def _save_prompt_response(prompt: str, response: str, output_dir: str, prefix: s
     # Save response
     response_file = os.path.join(output_dir, f"{base_name}_response.log")
     with open(response_file, "w") as f:
-        f.write(response)
+        f.write(json.dumps(response, indent=4))
 

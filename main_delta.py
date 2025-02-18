@@ -2,26 +2,35 @@ import os
 import datetime
 from pathlib import Path
 import csv
-from workflow_delta import (
-    generate_pddl_domain,
-    prune_scene_graph,
-    generate_pddl_problem,
-    decompose_pddl_goal
-)
+import traceback
+import json
+
+
+from workflow_delta import run_pipeline_delta
 from utils import (
     read_graph_from_path,
     copy_file,
-    save_file
+    save_file,
+    print_blue,
+    print_green,
+    print_red
 )
+
 
 # Directory of this script
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATASET_DIR = os.path.join(BASE_DIR, "dataset")
 
-def run_delta(selected_dataset_splits):
+def run_delta(selected_dataset_splits, GENERATE_DOMAIN = True):
+    print_blue("Running delta...")
     # Create a timestamp for the results folder
     timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-    RESULTS_DIR = os.path.join(BASE_DIR, "results", "delta", timestamp)
+
+    experiment_name = "delta"
+    if GENERATE_DOMAIN:
+        experiment_name += "_gendomain"
+
+    RESULTS_DIR = os.path.join(BASE_DIR, "results", experiment_name, timestamp)
     
     # Load key from key.txt
     api_key = Path("key.txt").read_text().strip()
@@ -38,26 +47,43 @@ def run_delta(selected_dataset_splits):
         # Create a CSV report file
         filename = task_dir_name + ".csv"
         with open(os.path.join(RESULTS_DIR, filename), mode="w") as f:
-            f.write("Task|Scene|Problem|Planning Succesful|Grounding Successful|Plan Length|Relaxations|Refinements per iteration|Goal relaxations\n")
+            f.write("Task|Scene|Problem|Planning Succesful|Grounding Successful|Plan Length|Number of subgoals\n")
 
-        print(task_dir_name)
+        task_dir = os.path.join(DATASET_DIR, task_dir_name)
+
+        # Load the task JSON description
+        task_file_path = os.path.join(DATASET_DIR, task_dir_name + ".json")
+        with open(task_file_path) as f:
+            task_description = json.load(f)
+
+
+
         # Look for a pddl file, that is the domain
         domain_file_path = None
-        task_dir = os.path.join(DATASET_DIR, task_dir_name)
-        for file in os.listdir(task_dir):
-            if file.endswith(".pddl"):
-                domain_file_path = os.path.join(task_dir, file)
-                break
+        domain_description = None
+        if GENERATE_DOMAIN:
+            domain_description = task_description["domain"]
+        else:
+            for file in os.listdir(task_dir):
+                if file.endswith(".pddl"):
+                    domain_file_path = os.path.join(task_dir, file)
+                    break
+
+            if domain_file_path is None:
+                raise Exception("No domain file found")
         
-        if domain_file_path is None:
-            raise Exception("No domain file found")
+            copy_file(domain_file_path, os.path.join(RESULTS_DIR, task_dir_name, "domain.pddl"))
         
-        copy_file(domain_file_path, os.path.join(RESULTS_DIR, task_dir_name, "domain.pddl"))
+
+        assert domain_file_path is not None or domain_description is not None, "No domain file found"
+        
         
         for scene_name in os.listdir(task_dir):
             dataset_scene_dir = os.path.join(task_dir, scene_name)
             if not os.path.isdir(dataset_scene_dir):
                 continue
+
+            #print_green(f"Processing scene: {scene_name}")
 
             for problem_id in os.listdir(dataset_scene_dir):
                 dataset_problem_dir = os.path.join(dataset_scene_dir, problem_id)
@@ -88,34 +114,64 @@ def run_delta(selected_dataset_splits):
                 # Create the log directory for the refinement step
                 os.makedirs(os.path.join(results_problem_dir, "logs"), exist_ok=True)
                 
+
+                print_blue(f"\n\n\n------------------\n\nRunning pipeline delta on task {task_dir_name}, scene {scene_name}, problem {problem_id}")
+
+                print_blue("#########\n# SETUP #\n#########")
                 try:
-                    # Run the pipeline
-                    domain_pddl = generate_pddl_domain(goal_file_path)
-                    pruned_sg = prune_scene_graph(scene_graph_file_path, description_file_path)
-                    problem_pddl = generate_pddl_problem(scene_graph_file_path, description_file_path, domain_file_path)
-                    sub_goals_pddl = decompose_pddl_goal(problem_pddl, domain_file_path)
+                    final_domain_file_path, final_pruned_scene_graph, final_problem_file_path, final_subgoals_file_paths, planning_succesful, grounding_succesful, subplans, failure_stage, failure_reason = run_pipeline_delta(
+                        goal_file_path, 
+                        initial_location_file_path,
+                        scene_graph_file_path, 
+                        description_file_path, 
+                        task_name = task_dir_name,
+                        scene_name = scene_name,
+                        problem_id = problem_id,
+                        results_dir=results_problem_dir,
+                        domain_file_path = domain_file_path,
+                        domain_description = domain_description
+                    )
+
 
                     # Save the final problem and plan
-                    save_file(problem_pddl, os.path.join(results_problem_dir, "problem_final.pddl"))
-                    save_file(sub_goals_pddl, os.path.join(results_problem_dir, "sub_goals_final.pddl"))
+                    if planning_succesful and grounding_succesful:
+                        final_plan_file_path = os.path.join(results_problem_dir, "plan_final.txt")
+                        # Concatenate all subplans and write the resulting plan
+                        with open(final_plan_file_path, "w") as f:
+                            for subplan in subplans:
+                                f.write(subplan + "\n")
+                        
+                        # Compute the length of the plan as the number of lines
+                        plan_length = len(final_generated_plan.split(", "))
 
-                    # Compute the length of the plan as the number of lines
-                    plan_length = len(sub_goals_pddl.split("\n"))
+                        # Write final generated domain
+                        final_generated_domain = open(final_domain_file_path, "r").read()
+                        save_file(final_generated_domain, os.path.join(results_problem_dir, "domain_final.pddl"))
+                        
+                        # Save the results to the CSV file
+                        with open(os.path.join(RESULTS_DIR, filename), mode="a", newline='') as f:
+                            writer = csv.writer(f, delimiter='|')
+                            writer.writerow([task_dir_name, scene_name, problem_id, planning_succesful, grounding_succesful, plan_length, len(subplans)])
+                    else:
+                        with open(os.path.join(RESULTS_DIR, filename), mode="a", newline='') as f:
+                            writer = csv.writer(f, delimiter='|')
+                            writer.writerow([task_dir_name, scene_name, problem_id, planning_succesful, grounding_succesful, "", ""])
 
-                    # Save the results to the CSV file
-                    with open(os.path.join(RESULTS_DIR, filename), mode="a", newline='') as f:
-                        writer = csv.writer(f, delimiter='|')
-                        writer.writerow([task_dir_name, scene_name, problem_id, True, True, plan_length, 0, "", ""])
+                    print_green("Pipeline delta completed successfully. Planning succesful: " + str(planning_succesful) + " Grounding succesful: " + str(grounding_succesful))
                 except Exception as e:
+                    print_red(f"Exception occurred: {str(e)}")
+                    traceback.print_exc()
+                    exception_str = str(e).strip().replace('\n', ' ').replace('\r', '')
                     with open(os.path.join(RESULTS_DIR, filename), mode="a", newline='') as f:
                         writer = csv.writer(f, delimiter='|')
-                        writer.writerow([task_dir_name, scene_name, problem_id, f"Exception: {str(e)}", "", "", "", ""])
+                        writer.writerow([task_dir_name, scene_name, problem_id, f"Exception: {exception_str}", ""])
+                    
+                    break
 
 if __name__ == "__main__":
+    print_blue("Starting main execution...")
     # RUN ON DATASET SPLIT #
     DATASET_SPLITS = [
-        "dining_setup",
-        "house_cleaning",
-        "laundry"
+        "dining_setup"
     ]
-    run_delta(DATASET_SPLITS)
+    run_delta(DATASET_SPLITS, GENERATE_DOMAIN = False)

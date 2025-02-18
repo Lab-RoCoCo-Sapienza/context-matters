@@ -17,23 +17,21 @@ def generate_splits(selected_dataset_splits):
                 # Get file name without extension
                 task_name = os.path.splitext(file)[0]
 
-                #Load json path
+                # Load json path
                 with open(path) as f:
-                    problems = json.load(f)
+                    data = json.load(f)
+                    problems = data["problems"]
                     f.close()
 
                 # Create a dir for the current task, this dir will contain all the scenes related to this task
                 domain_dir = os.path.join("dataset", task_name)
                 os.makedirs(domain_dir, exist_ok=True)
 
-                for problem_id in problems.keys():
-
-                    objects = problems[problem_id]["objects"]
-
-                    graphs = problems[problem_id]["graph"]
+                for problem_id, problem_data in problems.items():
+                    objects = problem_data["objects"]
+                    graphs = problem_data["graph"]
                     for graph_id in graphs:
                         print(graph_id)
-
 
                         scene_dir = os.path.join(domain_dir, graph_id)
                         os.makedirs(scene_dir, exist_ok=True)
@@ -46,22 +44,22 @@ def generate_splits(selected_dataset_splits):
                             print(path_graph)
 
                             graph = read_graph_from_path(Path(path_graph))
-                            #pprint(graph)
-                            print(problems[problem_id]["description"])
+                            # pprint(graph)
+                            print(problem_data["description"])
 
                             graph = (add_objects(graph, objects))
                             graph = add_descriptions_to_objects(graph)
 
-                            save_graph(graph,  os.path.join(problem_dir, graph_id.replace(".npz", "enhanced.npz")))
+                            save_graph(graph, os.path.join(problem_dir, graph_id.replace(".npz", "enhanced.npz")))
 
                             task_path = os.path.join(problem_dir, "task.txt")
                             with open(task_path, "w") as f:
-                                f.write(problems[problem_id]["goal"])
+                                f.write(problem_data["goal"])
                                 f.close()
                             
                             description_path = os.path.join(problem_dir, "description.txt")
                             with open(description_path, "w") as f:
-                                f.write(problems[problem_id]["description"])
+                                f.write(problem_data["description"])
                                 f.close()
 
                             init_loc_path = os.path.join(problem_dir, "init_loc.txt")
@@ -77,12 +75,12 @@ def generate_splits(selected_dataset_splits):
 if __name__=="__main__":
     
     DATASET_SPLITS = [
-        "dining_setup",
-        "house_cleaning",
-        "laundry",
-        "office_setup",
-        "other_1",
-        "other_2",
+#        "dining_setup",
+#        "house_cleaning",
+#        "laundry",
+#        "office_setup",
+#        "other_1",
+#        "other_2",
         "pc_assembly"
     ]
 

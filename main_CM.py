@@ -7,6 +7,7 @@ import datetime
 
 from workflow_CM import run_pipeline_CM
 import csv
+import traceback
 
 from utils import (
     read_graph_from_path,
@@ -20,11 +21,16 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATASET_DIR = os.path.join(BASE_DIR, "dataset")
 
 
-def run_CM(selected_dataset_splits):
+def run_CM(selected_dataset_splits, GENERATE_DOMAIN=False):
     
     # Create a timestamp for the results folder
     timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-    RESULTS_DIR = os.path.join(BASE_DIR, "results", "CM", timestamp)
+
+    experiment_name = "CM"
+    if GENERATE_DOMAIN:
+        experiment_name += "_gendomain"
+
+    RESULTS_DIR = os.path.join(BASE_DIR, "results", experiment_name, timestamp)
     
     # Load key from key.txt
     with open("key.txt", "r") as f:
@@ -57,19 +63,34 @@ def run_CM(selected_dataset_splits):
             f.write("Task|Scene|Problem|Planning Succesful|Grounding Successful|Plan Length|Relaxations|Refinements per iteration|Goal relaxations\n")
 
         print(task_dir_name)
+
+        # Load the task JSON description
+        task_file_path = os.path.join(DATASET_DIR, task_dir_name + ".json")
+        with open(task_file_path) as f:
+            task_description = json.load(f)
+            
+
+        
         # Look for a pddl file, that is the domain
         domain_file_path = None
-        task_dir = os.path.join(DATASET_DIR, task_dir_name)
-        for file in os.listdir(task_dir):
-            if file.endswith(".pddl"):
-                domain_file_path = os.path.join(task_dir, file)
-                break
+        domain_description = None
+        if GENERATE_DOMAIN:
+            domain_description = task_description["domain"]
+        else:
+            for file in os.listdir(task_dir):
+                if file.endswith(".pddl"):
+                    domain_file_path = os.path.join(task_dir, file)
+                    break
+
+            if domain_file_path is None:
+                raise Exception("No domain file found")
         
-        if domain_file_path is None:
-            raise Exception("No domain file found")
+            copy_file(domain_file_path, os.path.join(RESULTS_DIR, task_dir_name, "domain.pddl"))
         
-        copy_file(domain_file_path, os.path.join(RESULTS_DIR, task_dir_name, "domain.pddl"))
+        assert domain_file_path is not None or domain_description is not None, "No domain file found"
         
+
+
         for scene_name in os.listdir(task_dir):
 
             dataset_scene_dir = os.path.join(task_dir, scene_name)
@@ -120,7 +141,8 @@ def run_CM(selected_dataset_splits):
                         problem_id = problem_id,
                         results_dir=results_problem_dir,
                         WORKFLOW_ITERATIONS = 4,
-                        PDDL_GENERATION_ITERATIONS=4
+                        PDDL_GENERATION_ITERATIONS=4,
+                        domain_description = domain_description
                     )
 
                     # Save the final problem and plan
@@ -143,16 +165,22 @@ def run_CM(selected_dataset_splits):
                     refinements_per_iteration_str = ";".join(map(str, refinements_per_iteration))
 
                     # Goal relaxations
-                    goal_relaxations_str = "; ".join(f"'{goal_relaxation}'" for goal_relaxation in goal_relaxations)
+                    goal_relaxations_str = "; ".join(f"'{goal_relaxation.strip().replace('\n', ' ').replace('\r', '')}'" for goal_relaxation in goal_relaxations)
 
                     # Save the results to the CSV file
                     with open(os.path.join(RESULTS_DIR, filename), mode="a", newline='') as f:
                         writer = csv.writer(f, delimiter='|')
                         writer.writerow([task_dir_name, scene_name, problem_id, planning_succesful, grounding_succesful, plan_length, n_relaxations, refinements_per_iteration_str, goal_relaxations_str])
                 except Exception as e:
+                    exception_str = str(e).strip().replace('\n', ' ').replace('\r', '')
                     with open(os.path.join(RESULTS_DIR, filename), mode="a", newline='') as f:
                         writer = csv.writer(f, delimiter='|')
-                        writer.writerow([task_dir_name, scene_name, problem_id, f"Exception: {str(e)}", "", "", "", ""])
+                        writer.writerow([task_dir_name, scene_name, problem_id, f"Exception: {exception_str}", "", "", "", ""])
+                    
+                    # Write the exception traceback to error.txt in the logs directory
+                    error_log_path = os.path.join(results_problem_dir, "logs", "error.txt")
+                    with open(error_log_path, "w") as error_log_file:
+                        traceback.print_exc(file=error_log_file)
 
 def run_CM_for_task_scene(task_dir_name, scene_name, problem_id):
 

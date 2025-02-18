@@ -20,7 +20,7 @@ from utils import (
     print_magenta,
     print_cyan
 )
-from grounding import verify_groundability
+from pddl_verification import verify_groundability_in_scene_graph, VAL_validate, VAL_parse, VAL_ground
 
 
 
@@ -35,7 +35,9 @@ def run_pipeline_CM(
     problem_id,
     results_dir,
     WORKFLOW_ITERATIONS = 4,
-    PDDL_GENERATION_ITERATIONS = 4
+    PDDL_GENERATION_ITERATIONS = 4,
+    domain_description = None,
+    PERFORM_GROUNDING = False
 ):
 
     # SETUP #
@@ -170,7 +172,7 @@ def run_pipeline_CM(
 
         if plan is not None:       
             print_cyan("\nGrounding started...")
-            grounding_success_percentage, grounding_error_log = verify_groundability(
+            grounding_success_percentage, grounding_error_log = verify_groundability_in_scene_graph(
                 plan, 
                 extracted_scene_graph, 
                 domain_file_path=domain_file_path, 
@@ -181,7 +183,7 @@ def run_pipeline_CM(
                 initial_robot_location=initial_robot_location
             )
             
-            print_cyan(f"{grounding_success_percentage} {grounding_error_log}")
+            print_cyan(f"Grounding result: {grounding_success_percentage} {grounding_error_log}")
 
             grounding_succesful = grounding_success_percentage == 1
 

@@ -2,6 +2,7 @@ import os
 import json
 from pprint import pprint
 from pathlib import Path
+import subprocess
 
 from pddlgym.core import InvalidAction
 
@@ -9,7 +10,30 @@ from pddlgym.core import InvalidAction
 from planner import run_planner_FD, execute_plan, execute_action, initialize_pddl_environment
 from utils import load_knowledge_graph, read_graph_from_path, get_verbose_scene_graph
 
+def convert_JSON_to_verbose_SG(scene_graph):
+    locations = {}
+    for node, data in scene_graph["nodes"].items():
+        if "attributes" not in data.keys():
+            continue
+        assert "location" in data["attributes"]
+        locations[node] = data["attributes"]["location"]
+    
+    return locations
 
+def convert_JSON_to_locations_dictionary(scene_graph):
+    locations = {}
+    location_names = {}
+    
+    for room_id, room_data in scene_graph["room"].items():
+        location_names[str(room_id)] = room_data["scene_category"]+"_"+str(room_id)
+    
+    for obj_id, obj_data in scene_graph["object"].items():
+        if str(obj_data["parent_room"]) not in location_names.keys():
+            print("Could not find location "+str(obj_data["parent_room"])+" for object "+obj_data["class_"]+"_"+str(obj_id))
+            continue
+        locations[obj_data["class_"]+"_"+str(obj_id)] = location_names[str(obj_data["parent_room"])]
+
+    return locations
 
 # Grounds a subplan in a specific room
 def verify_subplan_groundability(pddlgym_environment, locations_dictionary, subplan, location):
@@ -200,7 +224,18 @@ def find_robot_location(obs, location_relation_str, location_type_str="room", ro
 
 
 
-def verify_groundability(plan, graph, domain_file_path, problem_dir, move_action_str, location_relation_str, location_type_str, initial_robot_location):
+def verify_groundability_in_scene_graph(
+    plan, 
+    graph, 
+    domain_file_path, 
+    problem_dir, 
+    move_action_str, 
+    location_relation_str, 
+    location_type_str, 
+    initial_robot_location,
+    pddlgym_environment=None,
+    locations_dictionary=None
+):
     """
     Performs grounding of a plan.
 
@@ -219,9 +254,16 @@ def verify_groundability(plan, graph, domain_file_path, problem_dir, move_action
     # Divide plan (list of strings each representing an action like (find_table(robot_1:robot,table_1:furniture,dining:location)) into subplans, separated by a move_action
     subplans = []
 
+    if pddlgym_environment is None:
+        # Initialize PDDLgym environment and obtain the first observation
+        pddlgym_environment, initial_observation = initialize_pddl_environment(domain_file_path, problem_dir)
+    else:
+        problem_index = 0
+        # Use only first problem in directory
+        pddlgym_environment.fix_problem_index(problem_index)
 
-    # Initialize PDDLgym environment and obtain the first observation
-    pddlgym_environment, initial_observation = initialize_pddl_environment(domain_file_path, problem_dir)
+        # Produce initial observation
+        initial_observation, debug_info = pddlgym_environment.reset()
 
     # Find initial robot location from initial observation of the PDDLGym environment (the initial location of the robot in the PDDL problem)
     initial_PDDL_robot_location, robot_name = find_robot_location(initial_observation, location_relation_str)
@@ -244,7 +286,8 @@ def verify_groundability(plan, graph, domain_file_path, problem_dir, move_action
         }
 
     # Extract a "object -> location" map
-    locations_dictionary = extract_locations_dictionary(graph)
+    if locations_dictionary is None:
+        locations_dictionary = extract_locations_dictionary(graph)
 
     # Explicitly add the robot to the locations_dictionary at its initial_robot_location
     if robot_name not in locations_dictionary:
@@ -331,32 +374,62 @@ def verify_groundability(plan, graph, domain_file_path, problem_dir, move_action
     return grounding_percentage, ""
 
 
-def plan_and_ground(problem_dir):
+def check_state_consistency(final_state, initial_state):
+    """
+    Checks that the initial state of the next PDDL sub-problem and the final state of the previous one coincide.
 
-    knowledge_graph = load_knowledge_graph(os.path.join(problem_dir, "kg.json"))
+    Args:
+        final_state: The final state of the previous sub-problem.
+        initial_state: The initial state of the next sub-problem.
 
-    initial_location = open(os.path.join(problem_dir, "init_loc.txt", "r").read())
-
-    # Generate plan
-    plan = run_planner_FD(DOMAIN_FILE_PATH, problem_dir)
-
-    if plan is None:
-        print("Could not generate plan")
-        return
-
-    # Perform grounding
-    grounding_success_percentage, reason_for_failure = verify_groundability(
-        plan, 
-        knowledge_graph, 
-        domain_file_path=DOMAIN_FILE_PATH, 
-        problem_dir=problem_dir, 
-        move_action_str="walk",
-        initial_robot_location=initial_location
-    )
-
-    return grounding_success_percentage, reason_for_failure, plan
+    Returns:
+        Boolean indicating whether the states are consistent.
+    """
+    return final_state.literals == initial_state.literals
 
 
+def VAL_validate(domain_file_path, problem_file_path, plan_path):
+    """
+    Validates a plan using the VAL tool.
+
+    Args:
+        domain_file_path: The path to the domain file.
+        problem_file_path: The path to the problem file.
+        plan_path: The path to the plan file.
+
+    Returns:
+        The output of the VAL tool.
+    """
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    validate_path = os.path.join(BASE_DIR, "third-party", "VAL", "build", "linux64", "Release", "bin", "Validate")
+    command = [validate_path, "-v", domain_file_path, problem_file_path, plan_path]
+    
+    result = subprocess.run(command, capture_output=True, text=True)
+    print(result.stdout)
+
+    raise
+
+def VAL_ground(domain_file_path, problem_file_path):
+    """
+    Grounds a domain and problem file using the VAL tool.
+
+    Args:
+        domain_file_path: The path to the domain file.
+        problem_file_path: The path to the problem file.
+
+    Returns:
+        The output of the VAL tool.
+    """
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    validate_path = os.path.join(BASE_DIR, "third-party", "VAL", "build", "linux64", "Release", "bin", "Instantiate")
+    command = [validate_path, domain_file_path, problem_file_path]
+    
+    result = subprocess.run(command, capture_output=True, text=True)
+    print(result.stdout)
+
+    raise
+
+def VAL_parse()
 
 if __name__ == "__main__":
 
@@ -383,7 +456,7 @@ if __name__ == "__main__":
             return
 
         # Perform grounding
-        grounding_success_percentage, reason_for_failure = verify_groundability(
+        grounding_success_percentage, reason_for_failure = verify_groundability_in_scene_graph(
             plan, 
             knowledge_graph, 
             domain_file_path=DOMAIN_FILE_PATH, 
