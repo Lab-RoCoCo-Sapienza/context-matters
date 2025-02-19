@@ -11,7 +11,29 @@
         "kitchen_cleaning_equipment": ["dishwasher", "dish_soap"]
       }
     },
+    "problem_2": {
+      "description": "Task related to washing clothes with a washing machine but there is no detergent",
+      "graph": ["Kemblesville"],
+      "goal": "Wash the dirty clothes using the washing machine.",
+      "objects": {
+        "clothes": ["pants", "dirty_pants", "shirt", "dirty_shirt", "socks", "dirty_socks", "underwear", "dirty_underwear", "jacket", "dirty_jacket"],
+        "kitchen_objects": ["plate", "dirty_plate", "knife", "dirty_knife", "drinking_glass", "dirty_drinking_glass", "fork", "dirty_fork", "spoon", "dirty_spoon", "bowl", "dirty_bowl", "pot", "dirty_pot", "pan", "dirty_pan"],
+        "laundry_equipment": ["washing_machine"],
+        "kitchen_cleaning_equipment": ["dishwasher", "dish_soap"]
+      }
+    },
     "problem_3": {
+      "description": "Task related to washing underclothing with a washing machine",
+      "graph": ["Kemblesville"],
+      "goal": "Wash dirty underclothing only using the washing machine.",
+      "objects": {
+        "clothes": ["pants", "dirty_pants", "shirt", "dirty_shirt", "socks", "dirty_socks", "underwear", "dirty_underwear", "jacket", "dirty_jacket"],
+        "kitchen_objects": ["plate", "dirty_plate", "knife", "dirty_knife", "drinking_glass", "dirty_drinking_glass", "fork", "dirty_fork", "spoon", "dirty_spoon", "bowl", "dirty_bowl", "pot", "dirty_pot", "pan", "dirty_pan"],
+        "laundry_equipment": ["washing_machine", "detergent"],
+        "kitchen_cleaning_equipment": ["dishwasher", "dish_soap"]
+      }
+    },
+    "problem_4": {
       "description": "Task related to washing clothes with a washing machine, but there is no washing machine in the scene",
       "graph": ["Kemblesville"],
       "goal": "Wash the dirty clothes using the washing machine.",
@@ -22,7 +44,7 @@
         "kitchen_cleaning_equipment": ["dishwasher", "dish_soap"]
       }
     },
-    "problem_4": {
+    "problem_5": {
       "description": "Task related to washing clothes with a washing machine, but there is no soap or detergent",
       "graph": ["Kemblesville"],
       "goal": "Wash the dirty clothes using the washing machine.",
@@ -33,7 +55,7 @@
         "kitchen_cleaning_equipment": ["dishwasher"]
       }
     },
-    "problem_5": {
+    "problem_6": {
       "description": "Task related to washing clothes with a washing machine, but there are no dirty clothes",
       "graph": ["Kemblesville"],
       "goal": "Wash the dirty clothes using the washing machine.",

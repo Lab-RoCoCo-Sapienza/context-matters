@@ -77,7 +77,7 @@ if __name__=="__main__":
     DATASET_SPLITS = [
 #        "dining_setup",
 #        "house_cleaning",
-#        "laundry",
+        "laundry",
 #        "office_setup",
 #        "other_1",
 #        "other_2",
