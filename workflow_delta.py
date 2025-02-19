@@ -741,12 +741,13 @@ def run_pipeline_delta(
             f.write(domain_pddl)
     
 
-
+    print_cyan("VAL validation check...")
     # CHECK #1
     # Use VAL_parse to check if the domain is valid
-    val_parse_success, val_parse_log = VAL_parse(domain_file_path)
+    val_parse_success, val_parse_log = VAL_validate(domain_file_path)
     if not val_parse_success:
         return domain_file_path, None, None, None, False, False, None, "DOMAIN_GENERATION", val_parse_log
+    print_cyan("VAL validation check passed.")
 
 
 
@@ -773,11 +774,13 @@ def run_pipeline_delta(
 
 
 
+    print_cyan("VAL validation check...")
     # CHECK #2
     # Use VAL_parse to check if the problem is valid
-    val_parse_success, val_parse_log = VAL_parse(domain_file_path)
+    val_parse_success, val_parse_log = VAL_validate(domain_file_path, problem_pddl_path)
     if not val_parse_success:
         return domain_file_path, pruned_sg, problem_pddl_path, None, False, False, None, "PROBLEM_GENERATION", val_parse_log
+    print_cyan("VAL validation check passed.")
         
 
 
