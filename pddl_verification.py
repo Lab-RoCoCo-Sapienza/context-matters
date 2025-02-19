@@ -411,10 +411,14 @@ def translate_plan(input_file, output_file):
 
     print(f"Plan successfully translated and written to {output_file}")
 
-def VAL_validate(domain_file_path, problem_file_path, plan_path):
+def VAL_validate(domain_file_path, problem_file_path=None, plan_path=None):
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     validate_path = os.path.join(BASE_DIR, "third-party", "VAL", "build", "linux64", "Release", "bin", "Validate")
-    command = [validate_path, "-v", domain_file_path, problem_file_path, plan_path]
+    command = [validate_path, "-v", domain_file_path]
+    if problem_file_path:
+        command.append(problem_file_path)
+    if plan_path:
+        command.append(plan_path)
     
     result = subprocess.run(command, capture_output=True, text=True)
     output_text = result.stdout
@@ -427,9 +431,13 @@ def VAL_validate(domain_file_path, problem_file_path, plan_path):
     #plan_repair_advice = None
 
     # Check for a successful plan validation
-    if "Plan valid" in output_text:
-        validation_successful = True
-        goal_satisfied = True  # If the plan is valid, the goal is satisfied
+    if plan_path is not None:
+        if "Plan valid" in output_text:
+            validation_successful = True
+            goal_satisfied = True  # If the plan is valid, the goal is satisfied
+    else:
+        if "fail" not in output_text:
+            validation_successful = True
 
     # Check if goal is explicitly not satisfied
     #if "Goal not satisfied" in output_text:
