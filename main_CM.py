@@ -185,12 +185,12 @@ def run_CM(selected_dataset_splits, GENERATE_DOMAIN=False, GROUND_IN_SCENE_GRAPH
                     # Save the results to the CSV file
                     with open(os.path.join(RESULTS_DIR, filename), mode="a", newline='') as f:
                         writer = csv.writer(f, delimiter='|')
-                        writer.writerow([task_dir_name, scene_name, problem_id, planning_succesful, grounding_succesful, plan_length, n_relaxations, refinements_per_iteration_str, goal_relaxations_str])
+                        writer.writerow([task_dir_name, scene_name, problem_id, planning_succesful, grounding_succesful, plan_length, n_relaxations, refinements_per_iteration_str, goal_relaxations_str, failure_stage, failure_reason])
                 except Exception as e:
                     exception_str = str(e).strip().replace('\n', ' ').replace('\r', '')
                     with open(os.path.join(RESULTS_DIR, filename), mode="a", newline='') as f:
                         writer = csv.writer(f, delimiter='|')
-                        writer.writerow([task_dir_name, scene_name, problem_id, f"Exception: {exception_str}", "", "", "", ""])
+                        writer.writerow([task_dir_name, scene_name, problem_id, f"Exception: {exception_str}", "", "", "", "", "", "", ""])
                     
                     # Write the exception traceback to error.txt in the logs directory
                     error_log_path = os.path.join(results_problem_dir, "logs", "error.txt")
