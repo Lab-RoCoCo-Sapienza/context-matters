@@ -1,1 +1,1 @@
-bedroom_5
+corridor_11

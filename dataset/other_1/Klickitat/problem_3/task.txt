@@ -1,1 +1,1 @@
-Task related to waste sorting
+Sort waste into plastic, paper, glass, and organic bins.

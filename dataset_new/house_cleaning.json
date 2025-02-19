@@ -1,0 +1,22 @@
+{
+  "problems": {
+    "clean_house_full": {
+      "description": "task related to house cleaning",
+      "graph": ["Shelbiana","Allensville", "Parole"],
+      "goal": "throw away a cola can, a banana peel and a rotting apple in the rubbish bin, then mop the floor in the kitchen and living room and clean the mop immediately after cleaning each room",
+      "objects": {
+        "cleaning_objects": ["mop", "rubbish_bin"],
+        "objects": ["cola_can", "banana_peel", "rotting_apple", "bucket"]
+      }
+    },
+    "clean_house_partial": {
+      "description": "task related to house cleaning but banana peel and rotting apple are missing",
+      "graph": ["Shelbiana","Allensville", "Parole"],
+      "goal": "throw away a cola can, a banana peel and a rotting apple in the rubbish bin, then mop the floor in the kitchen and living room and clean the mop immediately after cleaning each room",
+      "objects": {
+        "cleaning_objects": ["mop", "rubbish_bin"],
+        "objects": ["cola_can", "bucket"]
+      }
+    }
+  }
+}

@@ -1,1 +1,1 @@
-Task related to object placement
+Move all kitchen-related objects to the kitchen.

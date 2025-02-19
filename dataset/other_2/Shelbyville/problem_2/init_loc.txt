@@ -1,1 +1,1 @@
-corridor_15
+bathroom_1

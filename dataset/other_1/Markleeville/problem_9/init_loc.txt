@@ -1,1 +1,1 @@
-corridor_4
+empty_room_7

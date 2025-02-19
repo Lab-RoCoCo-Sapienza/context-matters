@@ -1,1 +1,1 @@
-Task related to organizing books in a library setting.
+Categorize and place all books on their respective shelves.

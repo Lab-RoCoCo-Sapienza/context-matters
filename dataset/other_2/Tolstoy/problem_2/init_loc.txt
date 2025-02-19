@@ -1,1 +1,1 @@
-kitchen_16
+corridor_12

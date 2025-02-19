@@ -1,1 +1,1 @@
-Task related to sorting and storing cleaning supplies.
+Sort and store all cleaning supplies into labeled storage units.

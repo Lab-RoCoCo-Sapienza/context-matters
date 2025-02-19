@@ -1,1 +1,1 @@
-storage_room_13
+corridor_6

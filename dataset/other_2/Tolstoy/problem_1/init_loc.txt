@@ -1,1 +1,1 @@
-utility_room_20
+corridor_12

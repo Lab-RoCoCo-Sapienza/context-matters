@@ -1,0 +1,92 @@
+{
+  "problems": {
+    "organize_art_supplies": {
+      "description": "Task related to organizing art supplies in the creative studio.",
+      "graph": ["McDade","Merom","Mifflinburg","Muleshoe","Newfields","Noxapater","Onaga","Pinesdale","Pomaria","Ranchester","Shelbyville","Stockman","Tolstoy","Uvalda","Wainscott","Wiconisco","Woodbine"],
+      "goal": "Arrange and label all art supplies on the shelves.",
+      "objects": {
+        "objects": [ "paintbrush", "palette", "easel", "canvas", "water cup", "oil paint", "acrylic paint", "sketchpad", "charcoal", "pastels", "marker", "spray paint", "shelf"]
+      }
+    },
+    "organize_electronic_equipment": {
+      "description": "Task related to organizing electronic equipment in the tech lab.",
+      "graph": ["McDade","Merom","Mifflinburg","Muleshoe","Newfields","Noxapater","Onaga","Pinesdale","Pomaria","Ranchester","Shelbyville","Stockman","Tolstoy","Uvalda","Wainscott","Wiconisco","Woodbine"],
+      "goal": "Place all electronic devices on the designated workstations.",
+      "objects": {
+        "objects": [ "laptop", "tablet", "smartphone", "monitor", "keyboard", "mouse", "printer", "router", "external hard drive", "webcam", "charger"]
+      }
+    },
+    "organize_kitchen_utensils": {
+      "description": "Task related to arranging kitchen utensils and appliances.",
+      "graph": ["McDade","Merom","Mifflinburg","Muleshoe","Newfields","Noxapater","Onaga","Pinesdale","Pomaria","Ranchester","Shelbyville","Stockman","Tolstoy","Uvalda","Wainscott","Wiconisco","Woodbine"],
+      "goal": "Collect and organize all kitchen utensils and appliances on the counters.",
+      "objects": {
+        "objects": [ "knife", "spoon", "fork", "plate", "cup", "blender", "microwave", "toaster", "pot", "pan", "cutting board", "colander", "counter"]
+      }
+    },
+    "organize_library_books": {
+      "description": "Task related to organizing books in a library setting.",
+      "graph": ["McDade","Merom","Mifflinburg","Muleshoe","Newfields","Noxapater","Onaga","Pinesdale","Pomaria","Ranchester","Shelbyville","Stockman","Tolstoy","Uvalda","Wainscott","Wiconisco","Woodbine"],
+      "goal": "Categorize and place all books on their respective shelves.",
+      "objects": {
+        "objects": [ "novel", "textbook", "magazine", "journal", "dictionary", "encyclopedia", "comic book", "atlas", "manual", "guide", "library"]
+      }
+    },
+    "organize_sports_equipment": {
+      "description": "Task related to organizing various sports equipment.",
+      "graph": ["McDade","Merom","Mifflinburg","Muleshoe","Newfields","Noxapater","Onaga","Pinesdale","Pomaria","Ranchester","Shelbyville","Stockman","Tolstoy","Uvalda","Wainscott","Wiconisco","Woodbine"],
+      "goal": "Place all sports equipment in the bedroom",
+      "objects": {
+        "objects": [ "basketball", "soccer ball", "tennis racket", "baseball bat", "golf club", "volleyball", "dumbbell", "yoga mat", "skipping rope", "boxing gloves"]
+      }
+    },
+    "organize_office_supplies": {
+      "description": "Task related to arranging office supplies neatly.",
+      "graph": ["McDade","Merom","Mifflinburg","Muleshoe","Newfields","Noxapater","Onaga","Pinesdale","Pomaria","Ranchester","Shelbyville","Stockman","Tolstoy","Uvalda","Wainscott","Wiconisco","Woodbine"],
+      "goal": "Organize all office supplies into designated compartments on the desk.",
+      "objects": {
+      ]
+    }
+  },
+  "problem_6": {
+    "description": "Task related to arranging office supplies neatly.",
+    "graph": ["McDade","Merom","Mifflinburg","Muleshoe","Newfields","Noxapater","Onaga","Pinesdale","Pomaria","Ranchester","Shelbyville","Stockman","Tolstoy","Uvalda","Wainscott","Wiconisco","Woodbine"],
+
+    "goal": "Organize all office supplies into designated compartments on the desk.",
+    "objects": {
+      "objects": [ "pen", "pencil", "stapler", "notebook", "paper clips", "scissors", "tape", "calculator", "highlighter", "folder", "binder", "desk"
+      ]
+    }
+  },
+  "problem_7": {
+    "description": "Task related to sorting and organizing garden tools.",
+    "graph": ["McDade","Merom","Mifflinburg","Muleshoe","Newfields","Noxapater","Onaga","Pinesdale","Pomaria","Ranchester","Shelbyville","Stockman","Tolstoy","Uvalda","Wainscott","Wiconisco","Woodbine"],
+
+    "goal": "Place all garden tools in kitchen",
+    "objects": {
+      "objects": [ "shovel", "rake", "hoe", "pruning shears", "watering can", "lawn mower", "gloves", "wheelbarrow", "trowel", "garden fork"
+      ]
+    }
+  },
+  "problem_8": {
+    "description": "Task related to arranging musical instruments neatly.",
+    "graph": ["McDade","Merom","Mifflinburg","Muleshoe","Newfields","Noxapater","Onaga","Pinesdale","Pomaria","Ranchester","Shelbyville","Stockman","Tolstoy","Uvalda","Wainscott","Wiconisco","Woodbine"],
+
+    "goal": "Arrange all musical instruments on living room",
+    "objects": {
+      "objects": [ "guitar", "piano", "drum set", "violin", "flute", "saxophone", "trumpet", "cello", "clarinet", "keyboard"
+      ]
+    }
+  },
+  "problem_9": {
+    "description": "Task related to sorting and storing cleaning supplies.",
+    "graph": ["McDade","Merom","Mifflinburg","Muleshoe","Newfields","Noxapater","Onaga","Pinesdale","Pomaria","Ranchester","Shelbyville","Stockman","Tolstoy","Uvalda","Wainscott","Wiconisco","Woodbine"],
+
+    "goal": "Sort and store all cleaning supplies into labeled storage units.",
+    "objects": {
+      "objects": [ "broom", "mop", "bucket", "cleaning spray", "detergent", "sponge", "gloves", "brush", "dustpan", "squeegee"
+      ]
+    }
+  }
+}
+

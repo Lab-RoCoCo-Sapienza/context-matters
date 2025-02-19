@@ -1,0 +1,48 @@
+{
+  "problems": {
+    "wash_clothes_with_machine": {
+      "description": "Task related to washing clothes with a washing machine",
+      "graph": ["Kemblesville"],
+      "goal": "Wash the dirty clothes using the washing machine.",
+      "objects": {
+        "clothes": ["pants", "dirty_pants", "shirt", "dirty_shirt", "socks", "dirty_socks", "underwear", "dirty_underwear", "jacket", "dirty_jacket"],
+        "kitchen_objects": ["plate", "dirty_plate", "knife", "dirty_knife", "drinking_glass", "dirty_drinking_glass", "fork", "dirty_fork", "spoon", "dirty_spoon", "bowl", "dirty_bowl", "pot", "dirty_pot", "pan", "dirty_pan"],
+        "laundry_equipment": ["washing_machine", "detergent"],
+        "kitchen_cleaning_equipment": ["dishwasher", "dish_soap"]
+      }
+    },
+    "wash_clothes_no_machine": {
+      "description": "Task related to washing clothes with a washing machine, but there is no washing machine in the scene",
+      "graph": ["Kemblesville"],
+      "goal": "Wash the dirty clothes using the washing machine.",
+      "objects": {
+        "clothes": ["pants", "dirty_pants", "shirt", "dirty_shirt", "socks", "dirty_socks", "underwear", "dirty_underwear", "jacket", "dirty_jacket"],
+        "kitchen_objects": ["plate", "dirty_plate", "knife", "dirty_knife", "drinking_glass", "dirty_drinking_glass", "fork", "dirty_fork", "spoon", "dirty_spoon", "bowl", "dirty_bowl", "pot", "dirty_pot", "pan", "dirty_pan"],
+        "laundry_equipment": ["detergent"],
+        "kitchen_cleaning_equipment": ["dishwasher", "dish_soap"]
+      }
+    },
+    "wash_clothes_no_soap": {
+      "description": "Task related to washing clothes with a washing machine, but there is no soap or detergent",
+      "graph": ["Kemblesville"],
+      "goal": "Wash the dirty clothes using the washing machine.",
+      "objects": {
+        "clothes": ["pants", "dirty_pants", "shirt", "dirty_shirt", "socks", "dirty_socks", "underwear", "dirty_underwear", "jacket", "dirty_jacket"],
+        "kitchen_objects": ["plate", "dirty_plate", "knife", "dirty_knife", "drinking_glass", "dirty_drinking_glass", "fork", "dirty_fork", "spoon", "dirty_spoon", "bowl", "dirty_bowl", "pot", "dirty_pot", "pan", "dirty_pan"],
+        "laundry_equipment": ["washing_machine"],
+        "kitchen_cleaning_equipment": ["dishwasher"]
+      }
+    },
+    "wash_clothes_no_dirty_clothes": {
+      "description": "Task related to washing clothes with a washing machine, but there are no dirty clothes",
+      "graph": ["Kemblesville"],
+      "goal": "Wash the dirty clothes using the washing machine.",
+      "objects": {
+        "clothes": ["pants", "shirt", "socks", "underwear", "jacket"],
+        "kitchen_objects": ["plate", "dirty_plate", "knife", "dirty_knife", "drinking_glass", "dirty_drinking_glass", "fork", "dirty_fork", "spoon", "dirty_spoon", "bowl", "dirty_bowl", "pot", "dirty_pot", "pan", "dirty_pan"],
+        "laundry_equipment": ["washing_machine"],
+        "kitchen_cleaning_equipment": ["dishwasher"]
+      }
+    }
+  }
+}
