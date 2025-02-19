@@ -56,7 +56,7 @@ def run_delta(selected_dataset_splits, GENERATE_DOMAIN = True, GROUND_IN_SCENE_G
         # Create a CSV report file
         filename = task_dir_name + ".csv"
         with open(os.path.join(RESULTS_DIR, filename), mode="w") as f:
-            f.write("Task|Scene|Problem|Planning Succesful|Grounding Successful|Plan Length|Number of subgoals\n")
+            f.write("Task|Scene|Problem|Planning Succesful|Grounding Successful|Plan Length|Number of subgoals|Failure stage|Failure reason\n")
 
         task_dir = os.path.join(DATASET_DIR, task_dir_name)
 
@@ -127,6 +127,12 @@ def run_delta(selected_dataset_splits, GENERATE_DOMAIN = True, GROUND_IN_SCENE_G
                 print_blue(f"\n\n\n------------------\n\nRunning pipeline delta on task {task_dir_name}, scene {scene_name}, problem {problem_id}")
 
                 print_blue("#########\n# SETUP #\n#########")
+                planning_succesful = False
+                grounding_succesful = False
+                subplans = []
+                failure_stage = None
+                failure_reason = None
+                final_generated_plan = None
                 try:
                     final_domain_file_path, final_pruned_scene_graph, final_problem_file_path, final_subgoals_file_paths, planning_succesful, grounding_succesful, subplans, failure_stage, failure_reason = run_pipeline_delta(
                         goal_file_path, 
@@ -162,11 +168,11 @@ def run_delta(selected_dataset_splits, GENERATE_DOMAIN = True, GROUND_IN_SCENE_G
                         # Save the results to the CSV file
                         with open(os.path.join(RESULTS_DIR, filename), mode="a", newline='') as f:
                             writer = csv.writer(f, delimiter='|')
-                            writer.writerow([task_dir_name, scene_name, problem_id, planning_succesful, grounding_succesful, plan_length, len(subplans)])
+                            writer.writerow([task_dir_name, scene_name, problem_id, planning_succesful, grounding_succesful, plan_length, len(subplans), "", ""])
                     else:
                         with open(os.path.join(RESULTS_DIR, filename), mode="a", newline='') as f:
                             writer = csv.writer(f, delimiter='|')
-                            writer.writerow([task_dir_name, scene_name, problem_id, planning_succesful, grounding_succesful, "", ""])
+                            writer.writerow([task_dir_name, scene_name, problem_id, planning_succesful, grounding_succesful, "", "", str(failure_stage), str(failure_reason)])
 
                     if planning_succesful and grounding_succesful:
                         print_green("Pipeline delta completed successfully. Planning succesful: " + str(planning_succesful) + " Grounding succesful: " + str(grounding_succesful))
@@ -179,7 +185,7 @@ def run_delta(selected_dataset_splits, GENERATE_DOMAIN = True, GROUND_IN_SCENE_G
                     exception_str = str(e).strip().replace('\n', ' ').replace('\r', '')
                     with open(os.path.join(RESULTS_DIR, filename), mode="a", newline='') as f:
                         writer = csv.writer(f, delimiter='|')
-                        writer.writerow([task_dir_name, scene_name, problem_id, f"Exception: {exception_str}", ""])
+                        writer.writerow([task_dir_name, scene_name, problem_id, planning_succesful, grounding_succesful, "", "", "Exception", exception_str])
                     
                     break
 
@@ -187,6 +193,12 @@ if __name__ == "__main__":
     print_blue("Starting main execution...")
     # RUN ON DATASET SPLIT #
     DATASET_SPLITS = [
-        "dining_setup"
+        "dining_setup",
+        "house_cleaning",
+        "laundry",
+#        "office_setup",
+#        "other_1",
+#        "other_2",
+        "pc_assembly"
     ]
     run_delta(DATASET_SPLITS, GENERATE_DOMAIN = True, GROUND_IN_SCENE_GRAPH = False, MODEL = "gpt-4o")
