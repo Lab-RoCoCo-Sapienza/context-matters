@@ -389,7 +389,7 @@ def check_state_consistency(final_state, initial_state):
     return final_state.literals == initial_state.literals
 
 
-def translate_plan(input_file, output_file):
+def translate_plan(input_file, output_file=None):
     # Step 1: Read the input file
     with open(input_file, 'r') as file:
         plan_content = file.read().strip()
@@ -405,11 +405,14 @@ def translate_plan(input_file, output_file):
         translated_action = f"({action} {' '.join(args)})"
         translated_plan.append(translated_action)
 
-    # Step 3: Write to the output file
-    with open(output_file, 'w') as file:
-        file.write('\n'.join(translated_plan))
+    if output_file is not None:
+        # Step 3: Write to the output file
+        with open(output_file, 'w') as file:
+            file.write('\n'.join(translated_plan))
 
     print(f"Plan successfully translated and written to {output_file}")
+
+    return translate_plan
 
 def VAL_validate(domain_file_path, problem_file_path=None, plan_path=None):
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))

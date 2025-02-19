@@ -4,7 +4,8 @@ from pathlib import Path
 from pprint import pprint
 
 from planner import plan_with_output
-from pddl_generation import generate_problem, refine_problem
+from pddl_generation import generate_domain, generate_problem, refine_problem
+from pddl_verification import translate_plan, VAL_validate, VAL_parse, VAL_ground
 from goal_relaxation import relax_goal, dict_replaceable_objects
 
 from utils import (
@@ -37,7 +38,8 @@ def run_pipeline_CM(
     WORKFLOW_ITERATIONS = 4,
     PDDL_GENERATION_ITERATIONS = 4,
     domain_description = None,
-    PERFORM_GROUNDING = False
+    GROUND_IN_SCENE_GRAPH = False,
+    model = "gpt-4o"
 ):
 
     # SETUP #
@@ -57,9 +59,11 @@ def run_pipeline_CM(
     planning_succesful = False 
     grounding_succesful = False
 
-    grounding_error_log = None
+    scene_graph_grounding_log = None
     pddlenv_error_log = None
     planner_error_log = None
+    val_validation_log = None
+    val_grounding_log = None
 
     iteration = 0 # Iteration counter of the outer loop
     refinements_per_iteration = [] # Output data: number of inner loop iterations per outer loop iteration
@@ -82,7 +86,21 @@ def run_pipeline_CM(
         os.makedirs(logs_dir, exist_ok=True)
         
 
-        
+        if domain_description is not None:
+            print_yellow("\n######################\n# GENERATING DOMAIN #\n######################")
+
+            # Run the pipeline
+            print_green("\n######################\n# GENERATING PDDL DOMAIN #\n######################")
+            domain_pddl = generate_domain(goal_file_path, domain_description, logs_dir=logs_dir, model=model)
+
+            print_cyan("VAL validation check...")
+            # CHECK #1
+            # Use VAL_parse to check if the domain is valid
+            val_parse_success, VAL_validation_log = VAL_validate(domain_file_path)
+            if not val_parse_success:
+                return domain_file_path, None, None, None, False, False, 0, [], [], "DOMAIN_GENERATION", VAL_validation_log
+            print_cyan("VAL validation check passed.")
+            
         print_yellow("\n######################\n# GENERATING PROBLEM #\n######################")
         
         problem = generate_problem(
@@ -93,7 +111,20 @@ def run_pipeline_CM(
             problem_file_path=problem_file_path,
             logs_dir=logs_dir,
             workflow_iteration=iteration,
+            model=model
         )
+
+        # CHECK #2
+        # Use VAL_parse to check if the domain/problem is valid
+        print_cyan("VAL validation check...")
+        val_parse_success, VAL_validation_log = VAL_validate(domain_file_path)
+        if not val_parse_success:
+            return domain_file_path, None, None, None, False, False, 0, [], [], "PROBLEM_GENERATION", VAL_validation_log
+        print_cyan("VAL validation check passed.")
+
+
+
+        # PLANNING CHECK #
 
         plan_file_path = os.path.join(problem_dir, f"plan_0.out")
         planner_output_file_path = os.path.join(problem_dir, "logs", f"planner_output_0.log")
@@ -132,7 +163,9 @@ def run_pipeline_CM(
                     refinement_iteration=PDDL_loop_iteration,
                     pddlenv_error_log=pddlenv_error_log,
                     planner_error_log=planner_error_log,
-                    grounding_error_log=grounding_error_log
+                    val_validation_log=val_validation_log,
+                    val_grounding_log=val_grounding_log,
+                    scene_graph_grounding_log=scene_graph_grounding_log
                 )
 
 
@@ -150,7 +183,7 @@ def run_pipeline_CM(
                     file.write(new_problem)
 
 
-                # Prepare next refinement iteration
+                # Prepare neroomxt refinement iteration
                 problem_dir = new_problem_dir
                 problem_file_path = new_problem_file_path
                 PDDL_loop_iteration += 1
@@ -159,37 +192,84 @@ def run_pipeline_CM(
                 planner_output_file_path = os.path.join(problem_dir, "logs", f"planner_output_{PDDL_loop_iteration}.log")
                 
                 # Attempt planning with refined problem
-                plan, pddlenv_error_log, planner_error_log = plan_with_output(domain_file_path, problem_dir, plan_file_path)      
+                plan, pddlenv_error_log, planner_error_log = plan_with_output(domain_file_path, problem_dir, plan_file_path)    
+
+
+                # Use VAL to obtain feedback by first validating the refined domain and then grounding it
+
+                # Translate the plan into a format parsable by VAL
+                translated_plan_path = os.path.join(problem_dir, f"translated_plan_{PDDL_loop_iteration}_{iteration}.txt")
+                translate_plan(plan_file_path, translated_plan_path)
+
+                print_cyan("\nVAL validation...")
+                # Use VAL to validate the plan
+                val_succesful, val_validation_log = VAL_validate(domain_file_path, problem_file_path, translated_plan_path)
+                print_cyan(f"\tresult: {val_succesful} {val_validation_log}")
+
+                print_cyan("\nVAL grounding...")
+                # Use VAL to ground the plan
+                val_ground_succesful, val_grounding_log = VAL_ground(domain_file_path, problem_file_path)
+                print_cyan(f"\tresult: {val_ground_succesful} {val_grounding_log}")  
+
         else:
             planning_succesful = True
             pddlenv_error_log = None
             planner_error_log = None
 
-        # Record the refinements for each iteration
+        # Record the number of refinements for each iteration
         refinements_per_iteration.append(PDDL_loop_iteration)
 
         # GROUNDING #
 
-        if plan is not None:       
-            print_cyan("\nGrounding started...")
-            grounding_success_percentage, grounding_error_log = verify_groundability_in_scene_graph(
-                plan, 
-                extracted_scene_graph, 
-                domain_file_path=domain_file_path, 
-                problem_dir=problem_dir, 
-                move_action_str="move_to",
-                location_relation_str="at",
-                location_type_str="room",
-                initial_robot_location=initial_robot_location
-            )
+        if plan is not None and plan:
             
-            print_cyan(f"Grounding result: {grounding_success_percentage} {grounding_error_log}")
 
-            grounding_succesful = grounding_success_percentage == 1
+            # Verify with VAL
+            translated_plan_path = os.path.join(iteration_dir, f"translated_plan_{PDDL_loop_iteration}.txt")
+
+            # Translate the plan into a format parsable by VAL
+            translate_plan(plan_file_path, translated_plan_path)
+
+            print_cyan("\nVAL validation...")
+            # Use VAL to validate the plan
+            val_succesful, val_validation_log = VAL_validate(domain_file_path, problem_file_path, translated_plan_path)
+            print_cyan(f"\tresult: {val_succesful} {val_validation_log}")
+
+            print_cyan("\nVAL grounding...")
+            # Use VAL to ground the plan
+            val_ground_succesful, val_grounding_log = VAL_ground(domain_file_path, problem_file_path)
+            print_cyan(f"\tresult: {val_ground_succesful} {val_grounding_log}")
+
+            grounding_succesful = val_succesful and val_ground_succesful
+
+
+
+            current_stage = "GROUNDING:VALIDATION:RELAXATION_"+str(iteration)
+
+            # If this experiment requires it, try grounding the plan in the real scene graph
+            if grounding_succesful and GROUND_IN_SCENE_GRAPH:
+                print_cyan("\nGrounding in scene graph started...")
+
+                grounding_success_percentage, scene_graph_grounding_log = verify_groundability_in_scene_graph(
+                    plan, 
+                    extracted_scene_graph, 
+                    domain_file_path=domain_file_path, 
+                    problem_dir=problem_dir, 
+                    move_action_str="move_to",
+                    location_relation_str="at",
+                    location_type_str="room",
+                    initial_robot_location=initial_robot_location
+                )
+
+                current_stage = "GROUNDING:SCENE_GRAPH:RELAXATION_"+str(iteration)
+            
+                print_cyan(f"Grounding result: {grounding_success_percentage} {scene_graph_grounding_log}")
+
+                grounding_succesful = grounding_success_percentage == 1
 
             # If we achieved 100% grounding success, we can break the loop as we correctly achieved the original goal
             if grounding_succesful:
-                grounding_error_log = None
+                scene_graph_grounding_log = None
                 break
 
 
@@ -200,8 +280,8 @@ def run_pipeline_CM(
         
         # Find alternative objects
         alternatives, current_goal = dict_replaceable_objects(extracted_scene_graph_str, current_goal, workflow_iteration=iteration, logs_dir=logs_dir)
-        print(alternatives)
-        print(current_goal)
+        #print(alternatives)
+        #print(current_goal)
 
         # Generate new goal
         current_goal = relax_goal(extracted_scene_graph_str, current_goal)
@@ -216,4 +296,4 @@ def run_pipeline_CM(
 
     
     # Return the final problem and plan
-    return problem_file_path, plan_file_path, current_goal, planning_succesful, grounding_succesful, iteration, refinements_per_iteration, goals
+    return problem_file_path, plan_file_path, current_goal, planning_succesful, grounding_succesful, iteration, refinements_per_iteration, goals, "", ""

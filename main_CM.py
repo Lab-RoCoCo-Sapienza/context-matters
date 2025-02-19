@@ -4,6 +4,7 @@ import pprint
 from pathlib import Path
 from dotenv import load_dotenv  # Fix import statement
 import datetime
+import json
 
 from workflow_CM import run_pipeline_CM
 import csv
@@ -21,14 +22,23 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATASET_DIR = os.path.join(BASE_DIR, "dataset")
 
 
-def run_CM(selected_dataset_splits, GENERATE_DOMAIN=False):
+def run_CM(selected_dataset_splits, GENERATE_DOMAIN=False, GROUND_IN_SCENE_GRAPH=False, MODEL="gpt-4o"):
     
     # Create a timestamp for the results folder
     timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
 
-    experiment_name = "CM"
+    # Compose experiment_name
+    experiment_name = f"CM_{MODEL}"
+
     if GENERATE_DOMAIN:
         experiment_name += "_gendomain"
+    else:
+        experiment_name += "_NOgendomain"
+    
+    if GROUND_IN_SCENE_GRAPH:
+        experiment_name += "_groundsg"
+    else:
+        experiment_name += "_NOgroundsg"
 
     RESULTS_DIR = os.path.join(BASE_DIR, "results", experiment_name, timestamp)
     
@@ -52,7 +62,10 @@ def run_CM(selected_dataset_splits, GENERATE_DOMAIN=False):
     os.makedirs(RESULTS_DIR, exist_ok=True)
 
     for task_dir_name in selected_dataset_splits:
-        if not os.path.isdir(os.path.join(DATASET_DIR, task_dir_name)):
+        
+        task_dir = os.path.join(DATASET_DIR, task_dir_name)
+        
+        if not os.path.isdir(task_dir):
             continue
 
         os.makedirs(os.path.join(RESULTS_DIR, task_dir_name), exist_ok=True)
@@ -60,7 +73,7 @@ def run_CM(selected_dataset_splits, GENERATE_DOMAIN=False):
         # Create a CSV report file
         filename = task_dir_name+".csv"
         with open(os.path.join(RESULTS_DIR, filename), mode="w") as f:
-            f.write("Task|Scene|Problem|Planning Succesful|Grounding Successful|Plan Length|Relaxations|Refinements per iteration|Goal relaxations\n")
+            f.write("Task|Scene|Problem|Planning Succesful|Grounding Successful|Plan Length|Relaxations|Refinements per iteration|Goal relaxations|Failure Stage|Failure Reason\n")
 
         print(task_dir_name)
 
@@ -130,7 +143,7 @@ def run_CM(selected_dataset_splits, GENERATE_DOMAIN=False):
                 
                 try:
                     # Run the pipeline
-                    final_problem_file_path, final_plan_file_path, final_goal, planning_succesful, grounding_succesful, n_relaxations, refinements_per_iteration, goal_relaxations = run_pipeline_CM(
+                    final_problem_file_path, final_plan_file_path, final_goal, planning_succesful, grounding_succesful, n_relaxations, refinements_per_iteration, goal_relaxations, failure_stage, failure_reason = run_pipeline_CM(
                         api_key,
                         goal_file_path = goal_file_path,
                         initial_location_file_path = initial_location_file_path,
@@ -142,7 +155,9 @@ def run_CM(selected_dataset_splits, GENERATE_DOMAIN=False):
                         results_dir=results_problem_dir,
                         WORKFLOW_ITERATIONS = 4,
                         PDDL_GENERATION_ITERATIONS=4,
-                        domain_description = domain_description
+                        domain_description = domain_description,
+                        GROUND_IN_SCENE_GRAPH = GROUND_IN_SCENE_GRAPH,
+                        model = MODEL
                     )
 
                     # Save the final problem and plan
@@ -165,7 +180,7 @@ def run_CM(selected_dataset_splits, GENERATE_DOMAIN=False):
                     refinements_per_iteration_str = ";".join(map(str, refinements_per_iteration))
 
                     # Goal relaxations
-                    goal_relaxations_str = "; ".join(f"'{goal_relaxation.strip().replace('\n', ' ').replace('\r', '')}'" for goal_relaxation in goal_relaxations)
+                    goal_relaxations_str = "; ".join("'{}'".format(goal_relaxation.strip().replace('\n', ' ').replace('\r', '')) for goal_relaxation in goal_relaxations)
 
                     # Save the results to the CSV file
                     with open(os.path.join(RESULTS_DIR, filename), mode="a", newline='') as f:
@@ -227,7 +242,7 @@ def run_CM_for_task_scene(task_dir_name, scene_name, problem_id):
     os.makedirs(os.path.join(results_problem_dir, "logs"), exist_ok=True)
 
     # Run the pipeline
-    final_problem_file_path, final_plan_file_path, final_goal, planning_succesful, grounding_succesful, n_relaxations, refinements_per_iteration, goal_relaxations = run_pipeline_CM(
+    final_domain_file_path, final_problem_file_path, final_plan_file_path, final_goal, planning_succesful, grounding_succesful, n_relaxations, refinements_per_iteration, goal_relaxations, failure_stage, failure_reason = run_pipeline_CM(
         api_key,
         goal_file_path=goal_file_path,
         initial_location_file_path=initial_location_file_path,
@@ -271,7 +286,7 @@ if __name__=="__main__":
         "other_2",
 #        "pc_assembly"
     ]
-    run_CM(DATASET_SPLITS)
+    run_CM(DATASET_SPLITS, GENERATE_DOMAIN=False, GROUND_IN_SCENE_GRAPH=False, MODEL="gpt-4o")
 
 
 

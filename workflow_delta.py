@@ -884,6 +884,7 @@ def run_pipeline_delta(
 
             planning_succesful = True
             
+            # Verify with VAL
             translated_plan_path = os.path.join(sub_goal_dir, f"translated_plan_{i+1}.txt")
 
             # Translate the plan into a format parsable by VAL
@@ -901,7 +902,10 @@ def run_pipeline_delta(
 
             grounding_succesful = val_succesful and val_ground_succesful
 
-            current_stage = "GROUNDING:SUBGOAL_"+str(i)
+
+
+
+            current_stage = "GROUNDING:VALIDATION:SUBGOAL_"+str(i)
 
             # If this experiment requires it, try grounding the plan in the real scene graph
             if grounding_succesful and GROUND_IN_SCENE_GRAPH:
@@ -927,7 +931,7 @@ def run_pipeline_delta(
 
                 grounding_succesful = grounding_success_percentage == 1
 
-                current_stage = "SCENE_GRAPH_GROUNDING:SUBGOAL_"+str(i)
+                current_stage = "GROUNDING:SCENE_GRAPH:SUBGOAL_"+str(i)
 
             # If we achieved 100% grounding success, we can break the loop as we correctly achieved the original goal
             if not grounding_succesful:

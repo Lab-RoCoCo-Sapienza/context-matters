@@ -6,6 +6,111 @@ from typing import Optional
 from utils import print_to_planning_log
 from agent import llm_call
 
+##########
+# DOMAIN #
+##########
+
+def generate_domain(
+    task_file, 
+    domain_description, 
+    logs_dir=None, 
+    model="gpt-4o"
+):
+    print_blue("Generating PDDL domain...")
+
+    prompt = """
+    Role: You are an excellent PDDL domain generator. Given a description of domain knowledge, you can generate a PDDL domain file.
+    We support the following subset of PDDL1.2:
+        STRIPS
+        Typing (including hierarchical)
+        Quantifiers (forall, exists)
+        Disjunctions (or)
+        Equality
+        Constants
+        Derived predicates
+
+    Act as if rooms are all interconnected. Make sure all types are present when using them.
+
+    Example: 
+    A robot in a household environment can perform the following actions on various objects.
+    For instance, consider the action "mop floor":
+    - Natural Language Description:
+        For mopping the floor, the agent must be in the room and have the mop in hand.
+        The mop must be clean and the floor must not be clean.
+        After performing the action, the floor becomes clean, but the mop becomes dirty and the agent’s battery is no longer full.
+
+    - Corresponding PDDL Definition:
+    
+    (define (domain house_cleaning)
+      (:requirements 
+        :strips
+    )
+
+    (:predicates
+        (agent-at ?r)
+        (has ?agent ?object)
+        (clean ?object)
+        (floor-clean ?r)
+        (battery-full)
+      )
+    
+    (:action mop_floor
+        :parameters (?a - agent ?i - item ?r - room)
+        :precondition 
+        (and
+            (agent_at ?a ?r)
+            (item_is_mop ?i)
+            (item_pickable ?i)
+            (agent_has_item ?a ?i)
+            (mop_clean ?i)
+            (not(floor_clean ?r))
+        )
+
+        :effect 
+        (and
+            (floor_clean ?r)
+            (not(mop_clean ?i))
+            (not(battery_full ?a))
+        )
+    )
+    """
+
+    question = f"""
+    Instruction:
+    Extract new object types and actions from the following description and generate a corresponding PDDL domain file.
+
+    <task>
+    
+    A new domain has the following new object types and actions.
+
+    <domain_description>
+
+    Please generate a corresponding PDDL domain file that incorporates these elements and respects the provided preconditions and effects.
+    Write only the PDDL domain and nothing more.
+    """
+
+    task_description = Path(task_file).read_text()
+    question = question.replace("<task>", task_description)
+
+    question = question.replace("<domain_description>", str(domain_description))
+
+    answer = llm_call(prompt, question, model=model)
+
+    # Save prompts and response
+    _save_prompt_response(
+        prompt=f"{prompt}\n\n{question}",
+        response=answer,
+        prefix="DELTA_pddl_domain_generation",
+        suffix="",
+        output_dir=logs_dir
+    )
+
+    domaind_pddl = answer.replace("`", "").replace("pddl", "").replace("lisp", "")
+
+    return domaind_pddl
+
+
+
 ###########
 # PROBLEM #
 ###########
@@ -19,7 +124,8 @@ def generate_problem(
     environment, 
     problem_file_path,
     logs_dir,
-    workflow_iteration
+    workflow_iteration,
+    model = "gpt-4o"
     ):
 
     # Directly use the provided problem file path since directory structure should exist
@@ -82,9 +188,9 @@ def generate_problem(
     """
 
     user_prompt += f"<initial_robot_location> {initial_robot_location} </initial_robot_location>"
-    print(user_prompt)
+    #print(user_prompt)
 
-    problem = llm_call(system_prompt, user_prompt)
+    problem = llm_call(system_prompt, user_prompt, model=model)
     
     # Save prompts and response
     _save_prompt_response(
@@ -117,7 +223,10 @@ def refine_problem(
     refinement_iteration,
     pddlenv_error_log = None,
     planner_error_log = None,
-    grounding_error_log = None
+    val_validation_log = None,
+    val_grounding_log = None,
+    scene_graph_grounding_log = None,
+    model = "gpt-4o"
 ):
 
     # 1) Read the relevant files
@@ -167,9 +276,26 @@ def refine_problem(
         ```
     """
 
-    if grounding_error_log is not None:
+    if val_validation_log is not None:
         reason_user_prompt += f"""
-        The grounding of the problem returned the following error:
+        An attempt to validate the plan using the VAL PDDL validation tool returned the following error:
+        ```
+        {val_validation_log}
+        ```
+    """
+
+    if val_grounding_log is not None:
+        reason_user_prompt += f"""
+        An attempt to generate the plan and ground it in the given domain and problem using the VAL PDDL grounding tool returned the following error:
+        ```
+        {val_grounding_log}
+        ```
+    """
+
+
+    if scene_graph_grounding_log is not None:
+        reason_user_prompt += f"""
+        An attempt to ground the previously generatred plan into the scene graph returned the following error:
         ```
         {grounding_error_log}
         ```
@@ -225,7 +351,7 @@ def refine_problem(
     """
 
     # Call the LLM for correction
-    llm_response = llm_call(correction_system_prompt, correction_user_prompt)
+    llm_response = llm_call(correction_system_prompt, correction_user_prompt, model=model)
 
     # Save prompt & response if you like
     _save_prompt_response(

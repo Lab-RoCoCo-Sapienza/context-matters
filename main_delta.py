@@ -172,7 +172,7 @@ def run_delta(selected_dataset_splits, GENERATE_DOMAIN = True, GROUND_IN_SCENE_G
                     else:
                         with open(os.path.join(RESULTS_DIR, filename), mode="a", newline='') as f:
                             writer = csv.writer(f, delimiter='|')
-                            writer.writerow([task_dir_name, scene_name, problem_id, planning_succesful, grounding_succesful, "", "", str(failure_stage), str(failure_reason)])
+                            writer.writerow([task_dir_name, scene_name, problem_id, planning_succesful, grounding_succesful, "", "", str(failure_stage).replace('\n', ' ').replace('\r', ''), str(failure_reason).replace('\n', ' ').replace('\r', '')])
 
                     if planning_succesful and grounding_succesful:
                         print_green("Pipeline delta completed successfully. Planning succesful: " + str(planning_succesful) + " Grounding succesful: " + str(grounding_succesful))
@@ -182,7 +182,7 @@ def run_delta(selected_dataset_splits, GENERATE_DOMAIN = True, GROUND_IN_SCENE_G
                 except Exception as e:
                     print_red(f"Exception occurred: {str(e)}")
                     traceback.print_exc()
-                    exception_str = str(e).strip().replace('\n', ' ').replace('\r', '')
+                    exception_str = str(e).strip().replace('\n', ' ').replace('\r', '').replace('\t', ' ')
                     with open(os.path.join(RESULTS_DIR, filename), mode="a", newline='') as f:
                         writer = csv.writer(f, delimiter='|')
                         writer.writerow([task_dir_name, scene_name, problem_id, planning_succesful, grounding_succesful, "", "", "Exception", exception_str])
