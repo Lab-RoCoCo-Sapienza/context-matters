@@ -156,7 +156,8 @@ def run_delta(selected_dataset_splits, GENERATE_DOMAIN = True, GROUND_IN_SCENE_G
                         # Concatenate all subplans and write the resulting plan
                         with open(final_plan_file_path, "w") as f:
                             for subplan in subplans:
-                                f.write(subplan + "\n")
+                                for action in subplan:
+                                    f.write(str(action) + ",\n")
                         
                         # Compute the length of the plan as the number of lines
                         plan_length = len(final_generated_plan.split(", "))
