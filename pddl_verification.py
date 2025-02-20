@@ -127,7 +127,8 @@ def extract_locations_dictionary(graph):
 
     for location, objects in graph.items():
         for obj in objects:
-            obj_name = obj[0]
+            obj_name = obj[0].replace(" ", "_")
+            location = location.replace(" ", "_")
             locations[obj_name] = location
     
     return locations
@@ -294,6 +295,7 @@ def verify_groundability_in_scene_graph(
     if robot_name not in locations_dictionary:
         locations_dictionary[robot_name] = initial_robot_location
 
+    print(locations_dictionary)
     
     # [Problem hallucination checks]
 

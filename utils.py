@@ -360,7 +360,9 @@ def get_verbose_scene_graph(graph: Dict, as_string=True) -> str:
             obj_lines = []
             if objs_in_room:
                 for obj in objs_in_room:
-                    obj_lines.append(f"{obj[0]} - {obj[1]}")
+                    object_name = obj[0].replace(" ", "_")
+                    object_description = obj[1]
+                    obj_lines.append(f"{object_name} - {object_description}")
             
                 objs_str = "\n  - " + "\n  - ".join(obj_lines)
             else:
