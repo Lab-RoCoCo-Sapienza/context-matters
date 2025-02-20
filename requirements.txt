@@ -1,5 +1,5 @@
 pddlgym
 torch
-sentence_trasnformers
+sentence_transformers
 openai
 opencv-python
