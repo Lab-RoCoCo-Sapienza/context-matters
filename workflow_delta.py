@@ -264,6 +264,11 @@ def run_pipeline_delta(
                 # Convert the scene graph into a format readable by the grounder
                 extracted_locations_dictionary = convert_JSON_to_locations_dictionary(pruned_sg)
 
+                # Save the extracted locations dictionary to file
+                extracted_locations_dictionary_file_path = os.path.join(sub_goal_dir, "extracted_locations_dictionary.json")
+                with open(extracted_locations_dictionary_file_path, "w") as f:
+                    json.dump(extracted_locations_dictionary, f, indent=4)
+
                 grounding_success_percentage, grounding_error_log = verify_groundability_in_scene_graph(
                     plan, 
                     None, 
@@ -297,7 +302,7 @@ def run_pipeline_delta(
             # If we achieved 100% grounding success, we can break the loop as we correctly achieved the original goal
             if not grounding_succesful:
                 plans.append(plan)
-                return domain_file_path, pruned_sg, problem_pddl_path, sub_goals_file_paths, True, False, plans, current_stage, grounding_error_log
+                return domain_file_path, pruned_sg, problem_pddl_path, sub_goals_file_paths, True, False, plans, CURRENT_PHASE, grounding_error_log
                 break
         else:
             error_log = pddlenv_error_log if pddlenv_error_log is not None else planner_error_log

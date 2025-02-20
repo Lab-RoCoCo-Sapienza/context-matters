@@ -37,7 +37,7 @@ def convert_JSON_to_locations_dictionary(scene_graph):
     return locations
 
 # Grounds a subplan in a specific room
-def verify_subplan_groundability(pddlgym_environment, locations_dictionary, subplan, location):
+def verify_subplan_groundability(pddlgym_environment, graph, locations_dictionary, subplan, location):
     """
     Grounds a subplan in a specific room.
 
@@ -61,12 +61,12 @@ def verify_subplan_groundability(pddlgym_environment, locations_dictionary, subp
         print(f"Moving from {from_location} to {to_location}")
 
         # Find the from_location of the current subplan
-        if from_location not in locations_dictionary.values():
+        if from_location not in graph.keys():
             print(f"Error: Location {from_location} not found in scene graph")
             return 0, f"Location {from_location} not found in scene graph"
         
         #Find the to_location of the current subplan
-        if to_location not in locations_dictionary.values():
+        if to_location not in graph.keys():
             print(f"Error: Location {to_location} not found in scene graph")
             return 0, f"Location {to_location} not found in scene graph"
         
@@ -74,7 +74,7 @@ def verify_subplan_groundability(pddlgym_environment, locations_dictionary, subp
         pddlgym_environment, obs = execute_action(pddlgym_environment, move_action)
 
         # Update the locations_dictionary (useful if the robot was carrying something with him while moving)
-        locations_dictionary, hallucinated_obj, hallucinated_loc = update_locations_dictionary(locations_dictionary, obs)
+        locations_dictionary, hallucinated_obj, hallucinated_loc = update_locations_dictionary(graph, locations_dictionary, obs)
 
         if hallucinated_obj or hallucinated_loc:
             return 0, f"Hallucinated object: {hallucinated_obj}, Hallucinated location: {hallucinated_loc}"
@@ -134,7 +134,7 @@ def extract_locations_dictionary(graph):
 
 
 
-def update_locations_dictionary(locations_dictionary, new_environment_state, location_relation_str = "at", location_variable_type = "room"):
+def update_locations_dictionary(graph, locations_dictionary, new_environment_state, location_relation_str = "at", location_variable_type = "room"):
     """
     Updates the locations dictionary based on the new environment state.
 
@@ -172,7 +172,7 @@ def update_locations_dictionary(locations_dictionary, new_environment_state, loc
 
             # Check that the PDDLgym state locations are present in the locations dictionary, 
             # otherwise they are the result of hallucinations in the problem generation step
-            if new_location not in new_locations_dictionary.values():
+            if new_location not in graph.keys():
                 return new_locations_dictionary, "", new_location
                 
             new_locations_dictionary[pddl_object] = new_location
@@ -360,7 +360,7 @@ def verify_groundability_in_scene_graph(
             current_location = subplan["location"]
 
         # Attempt grounding for the current subplan (the part of a plan happening in a single room)    
-        successful_actions, reason_for_failure = verify_subplan_groundability(pddlgym_environment, locations_dictionary, subplan, current_location)
+        successful_actions, reason_for_failure = verify_subplan_groundability(pddlgym_environment, graph, locations_dictionary, subplan, current_location)
 
         if not successful_actions:
             return grounding_percentage, reason_for_failure
