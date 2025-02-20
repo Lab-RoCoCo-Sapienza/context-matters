@@ -10,6 +10,8 @@ import random
 from collections import defaultdict
 
 from agent import local_llm_call
+import json
+import os
 
 def normalize_string(s: str) -> str:
     """Convert string to lowercase and replace spaces/special chars with underscores"""
@@ -67,37 +69,6 @@ def filter_graph(graph: Dict, labels: Set[str]) -> Dict:
     return new_graph
 
 
-def get_room_names(graph):
-    return [room_data["scene_category"] + "_" + str(room_id) for room_id, room_data in graph["room"].items()]
-
-
-def choose_random_room(graph):
-    return random.choice(get_room_names(graph))
-
-
-def add_descriptions_to_objects(graph):
-    """
-    Aggiunge la proprietà "description" a ogni oggetto nel grafo.
-
-    :param graph: Dizionario contenente il 3DSG
-    :return: Grafo aggiornato con descrizioni per gli oggetti
-    """
-    
-    for obj_id, obj in graph["object"].items():
-        obj["description"] = local_llm_call("Describe the object in one sentence in the following format A <color> <name of object> made of <material>\
-        in which you replace <color> with the color of the object, <name of object> with the name of the object and <material> with the material of the\
-        object. For example A brown table made of wood. Do not add other information.", obj["class_"])
-    return graph
-
-
-def add_objects(dict,):
-    """
-    Convert a list of dictionaries to a single dictionary in the format readble for scene graph
-    
-    :param list: List of dictionaries
-    :return: Dictionary
-    """
-
 
 def save_graph(graph: Dict, path: str):
     """
@@ -107,59 +78,6 @@ def save_graph(graph: Dict, path: str):
     :param path: Path to the file
     """
     np.savez(path, output=graph)
-
-def add_objects(graph, dict_objects):
-    """
-    Aggiunge oggetti casuali a stanze casuali nel grafo.
-
-    :param graph: Dizionario contenente il 3DSG
-    :param num_objects: Numero di oggetti da aggiungere
-    :return: Grafo aggiornato con nuovi oggetti
-    """
-    
-    possible_objects = []
-    for _, obj_value in dict_objects.items():
-        for obj in obj_value:
-            possible_objects.append({"class_": obj, "action_affordance": []})
-
-    # Trova ID massimo attuale per evitare conflitti
-    if graph["object"]:
-        max_id = max(graph["object"].keys())
-    else:
-        max_id = 0
-
-    # Ottieni stanze esistenti
-    room_ids = list(graph["room"].keys())
-
-    # Aggiungi oggetti random (scegli a caso il numero di oggetti uguali)
-    for obj_data in possible_objects:
-        obj_id = max_id + 1
-        obj_type = obj_data["class_"]
-        room_id = random.choice(room_ids)  # Scegli una stanza casuale
-
-        # Genera posizione casuale all'interno della stanza scelta
-        location = np.array([
-            np.zeros(3),
-            np.zeros(3),
-            np.zeros(3)
-        ])
-
-        # Crea nuovo oggetto
-        new_object = {
-            "id": obj_id,
-            "class_": obj_data["class_"],
-            "action_affordance": obj_data["action_affordance"],
-            "location": location,
-            "parent_room": room_id,
-        }
-
-        # Aggiungi al grafo
-        graph["object"][obj_id] = new_object
-        max_id += 1  # Aggiorna ID massimo
-
-    return graph
-
-
 
 
 def read_graph_from_path(path: Path) -> Dict:
@@ -515,3 +433,73 @@ def print_magenta(text: str):
 
 def print_cyan(text: str):
     print(f"\033[96m{text}\033[0m")
+
+def save_statistics(
+    phase,
+    dir,
+    workflow_iteration,
+    pddl_refinement_iteration=None,
+    plan_succesful=None,
+    pddlenv_error_log=None,
+    planner_error_log=None,
+    planner_statistics=None,
+    VAL_validation_log=None,
+    VAL_grounding_log=None,
+    scene_graph_grounding_log=None,
+    grounding_success_percentage=None,
+    exception=None
+):
+    if not os.path.exists(dir):
+        os.makedirs(dir)
+        
+    stats_file = os.path.join(dir, "statistics.json")
+    
+    if os.path.exists(stats_file):
+        with open(stats_file, "r") as f:
+            statistics = json.load(f)
+    else:
+        statistics = {}
+
+    if "statistics" not in statistics:
+        statistics["statistics"] = {}
+
+    if workflow_iteration not in statistics["statistics"]:
+        statistics["statistics"][workflow_iteration] = {}
+
+    if phase not in statistics["statistics"][workflow_iteration]:
+        if phase == "PDDL_REFINEMENT":
+            statistics["statistics"][workflow_iteration][phase] = []
+        else:
+            statistics["statistics"][workflow_iteration][phase] = {}
+
+    data = {
+        "plan_succesful": plan_succesful,
+        "pddlenv_error_log": pddlenv_error_log,
+        "planner_error_log": planner_error_log,
+        "planner_statistics": planner_statistics,
+        "VAL_validation_log": VAL_validation_log,
+        "VAL_grounding_log": VAL_grounding_log,
+        "scene_graph_grounding_log": scene_graph_grounding_log,
+        "grounding_success_percentage": grounding_success_percentage
+    }
+
+    if phase == "PDDL_REFINEMENT":
+        statistics["statistics"][workflow_iteration][phase].append(data)
+    else:
+        statistics["statistics"][workflow_iteration][phase] = data
+
+    if exception is not None:
+        if "exception" not in statistics:
+            statistics["exception"] = []
+        exception_data = {
+            "reason": str(exception),
+            "traceback": exception.__traceback__,
+            "workflow_iteration": workflow_iteration,
+            "phase": phase
+        }
+        if pddl_refinement_iteration is not None:
+            exception_data["refinement_iteration"] = pddl_refinement_iteration
+        statistics["exception"].append(exception_data)
+
+    with open(stats_file, "w") as f:
+        json.dump(statistics, f, indent=4)

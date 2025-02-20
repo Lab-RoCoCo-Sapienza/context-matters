@@ -44,17 +44,18 @@ def generate_pddl_domain(task_file, domain_description, logs_dir=None, model="gp
     (define (domain house_cleaning)
       (:requirements 
         :strips
-    )
-
-    (:predicates
-        (agent-at ?r)
-        (has ?agent ?object)
-        (clean ?object)
-        (floor-clean ?r)
-        (battery-full)
+        :typing
       )
-    
-    (:action mop_floor
+      (:predicates
+        (agent_at ?a - agent ?r - room)
+        (item_is_mop ?i - item)
+        (item_pickable ?i - item)
+        (agent_has_item ?a - agent ?i - item)
+        (mop_clean ?i - item)
+        (floor_clean ?r - room)
+        (battery_full ?a - agent)
+      )
+      (:action mop_floor
         :parameters (?a - agent ?i - item ?r - room)
         :precondition 
         (and
@@ -63,15 +64,15 @@ def generate_pddl_domain(task_file, domain_description, logs_dir=None, model="gp
             (item_pickable ?i)
             (agent_has_item ?a ?i)
             (mop_clean ?i)
-            (not(floor_clean ?r))
+            (not (floor_clean ?r))
         )
-
         :effect 
         (and
             (floor_clean ?r)
-            (not(mop_clean ?i))
-            (not(battery_full ?a))
+            (not (mop_clean ?i))
+            (not (battery_full ?a))
         )
+      )
     )
     """
 
@@ -137,7 +138,7 @@ def prune_scene_graph(scene_graph_path, goal_description_path, initial_robot_loc
                     'location': [-1.7197105, -2.610225, 1.255566205], 
                     'scene_category': 'kitchen', 
                     'size': [1.836419, 1.91739, 2.326879], 
-                    'volume': 5,21398719237, 
+                    'volume': 5.21398719237, 
                     'parent_building': 70
                 }
             },
@@ -296,7 +297,7 @@ def generate_pddl_problem(pruned_scene_graph, goal_description_path, domain_pddl
                         'location': [-1.7197105, -2.610225, 1.255566205], 
                         'scene_category': 'kitchen', 
                         'size': [1.836419, 1.91739, 2.326879], 
-                        'volume': 5,21398719237, 
+                        'volume': 5.21398719237, 
                         'parent_building': 70
                 }
         },

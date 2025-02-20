@@ -1,4 +1,5 @@
 from pprint import pprint
+import os
 
 import pddlgym
 from pddlgym.core import PDDLEnv
@@ -9,7 +10,7 @@ FAST_DOWNWARD_PATH = "downward/fast-downward.py"
 
 
 
-def run_planner_FD(domain_file_path, problem_dir, env=None):
+def run_planner_FD(domain_file_path, problem_dir, env=None, search_flag='--search "astar(ff())"', timeout=60):
 
     if env is None:
         try:
@@ -18,7 +19,7 @@ def run_planner_FD(domain_file_path, problem_dir, env=None):
         except Exception as e:
             print("Exception in PDDLEnv: " + str(e))
             traceback.print_exc()
-            return None, str(e), None
+            return None, str(e), None, None
 
     # Use only first problem in directory
     #env.fix_problem_index(0)
@@ -30,30 +31,35 @@ def run_planner_FD(domain_file_path, problem_dir, env=None):
     except Exception as e:
         print("Exception in PDDLEnv reset: " + str(e))
         traceback.print_exc()
-        return None, str(e), None
+        return None, str(e), None, None
         
-    print(env.get_state())
+    #print(env.get_state())
 
     # Create planner
-    planner = FD()
+    #planner = FD(alias_flag='--search "astar(blind())"')
+    planner = FD(alias_flag='', final_flags=search_flag)
+
+    stats = planner.get_statistics()
 
     # Plan
     try:
-        plan = planner(env.domain, obs)
+        plan = planner(env.domain, obs, timeout=timeout)
     except Exception as e:
         print("Exception in FD planner: " + str(e))
         traceback.print_exc()
-        return None, None, str(e)
+        return None, None, str(e), stats
 
-    return plan, None, None
+    return plan, None, None, stats
 
 
-def plan_with_output(domain_file_path, problem_dir, plan_file_path, env=None):
+def plan_with_output(domain_file_path, problem_dir, plan_file_path, env=None, search_flag='--search "astar(ff())"', timeout=60):
 
     # PLANNING #
     
     print("\n\n\tPerforming planning...")
-    plan, pddlenv_error_log, planner_error_log = run_planner_FD(domain_file_path, problem_dir, env)
+    print(domain_file_path)
+    print(os.path.join(problem_dir, "problem.pddl"))
+    plan, pddlenv_error_log, planner_error_log, statistics = run_planner_FD(domain_file_path, problem_dir, env, search_flag, timeout)
 
     # Save planner output
     with open(plan_file_path, "w") as file:
@@ -64,7 +70,7 @@ def plan_with_output(domain_file_path, problem_dir, plan_file_path, env=None):
         elif planner_error_log is not None:
             file.write(planner_error_log)
 
-    return plan, pddlenv_error_log, planner_error_log
+    return plan, pddlenv_error_log, planner_error_log, statistics
 
 
 def initialize_pddl_environment(domain_file_path, problem_dir):
