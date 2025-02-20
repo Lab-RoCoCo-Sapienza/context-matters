@@ -1,17 +1,16 @@
 import re
-
-import torch
 import numpy as np
-from pathlib import Path
 from typing import Dict, Set, Optional
 from sentence_transformers import SentenceTransformer
 import random
-
 from collections import defaultdict
-
-from agent import local_llm_call
+from pathlib import Path
 import json
 import os
+import traceback
+import torch
+
+from agent import local_llm_call
 
 def normalize_string(s: str) -> str:
     """Convert string to lowercase and replace spaces/special chars with underscores"""
@@ -449,28 +448,6 @@ def save_statistics(
     grounding_success_percentage=None,
     exception=None
 ):
-    if not os.path.exists(dir):
-        os.makedirs(dir)
-        
-    stats_file = os.path.join(dir, "statistics.json")
-    
-    if os.path.exists(stats_file):
-        with open(stats_file, "r") as f:
-            statistics = json.load(f)
-    else:
-        statistics = {}
-
-    if "statistics" not in statistics:
-        statistics["statistics"] = {}
-
-    if workflow_iteration not in statistics["statistics"]:
-        statistics["statistics"][workflow_iteration] = {}
-
-    if phase not in statistics["statistics"][workflow_iteration]:
-        if phase == "PDDL_REFINEMENT":
-            statistics["statistics"][workflow_iteration][phase] = []
-        else:
-            statistics["statistics"][workflow_iteration][phase] = {}
 
     data = {
         "plan_succesful": plan_succesful,
@@ -483,23 +460,51 @@ def save_statistics(
         "grounding_success_percentage": grounding_success_percentage
     }
 
-    if phase == "PDDL_REFINEMENT":
-        statistics["statistics"][workflow_iteration][phase].append(data)
+    if not os.path.exists(dir):
+        os.makedirs(dir)
+        
+    stats_file = os.path.join(dir, "statistics.json")
+
+    statistics = {}
+    
+    if not os.path.exists(stats_file):
+        if phase is not None:
+            statistics["statistics"] = {
+                    "0": {
+                        phase: {}
+                    }
+                }
+
+            if phase == "PDDL_REFINEMENT":
+                statistics["statistics"]["0"][phase] = [data]
+            else:
+                statistics["statistics"]["0"][phase] = data
     else:
-        statistics["statistics"][workflow_iteration][phase] = data
+        with open(stats_file, "r") as f:
+            statistics = json.load(f)
+        
+        if str(workflow_iteration) not in statistics["statistics"]:
+            statistics["statistics"][str(workflow_iteration)] = {}
+
+
+        if phase == "PDDL_REFINEMENT":
+            if "PDDL_REFINEMENT" not in statistics["statistics"][str(workflow_iteration)]:
+                statistics["statistics"][str(workflow_iteration)][phase] = []
+            else:
+                statistics["statistics"][str(workflow_iteration)][phase].append(data)
+        else:
+            statistics["statistics"][str(workflow_iteration)][phase] = data
+
 
     if exception is not None:
-        if "exception" not in statistics:
-            statistics["exception"] = []
-        exception_data = {
+        statistics["exception"] = {
             "reason": str(exception),
-            "traceback": exception.__traceback__,
+            "traceback": ''.join(traceback.format_tb(exception.__traceback__)),
             "workflow_iteration": workflow_iteration,
+            "refinement_iteration": pddl_refinement_iteration,
             "phase": phase
         }
-        if pddl_refinement_iteration is not None:
-            exception_data["refinement_iteration"] = pddl_refinement_iteration
-        statistics["exception"].append(exception_data)
+        
 
     with open(stats_file, "w") as f:
         json.dump(statistics, f, indent=4)

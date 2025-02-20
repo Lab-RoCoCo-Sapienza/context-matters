@@ -476,7 +476,7 @@ def VAL_ground(domain_file_path, problem_file_path):
     if "Errors Encountered" in output_text:
         return False, output_text
     else:
-        return True, ""
+        return True, output_text
 
 def VAL_parse(domain_file_path, problem_file_path=None):
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))

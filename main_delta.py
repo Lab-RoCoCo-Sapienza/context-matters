@@ -6,14 +6,15 @@ import traceback
 import json
 
 
-from workflow_delta import run_pipeline_delta
+from workflow_delta import CURRENT_PHASE, run_pipeline_delta
 from utils import (
     read_graph_from_path,
     copy_file,
     save_file,
     print_blue,
     print_green,
-    print_red
+    print_red,
+    save_statistics
 )
 
 
@@ -132,7 +133,6 @@ def run_delta(selected_dataset_splits, GENERATE_DOMAIN = True, GROUND_IN_SCENE_G
                 subplans = []
                 failure_stage = None
                 failure_reason = None
-                final_generated_plan = None
                 try:
                     final_domain_file_path, final_pruned_scene_graph, final_problem_file_path, final_subgoals_file_paths, planning_succesful, grounding_succesful, subplans, failure_stage, failure_reason = run_pipeline_delta(
                         goal_file_path, 
@@ -149,7 +149,7 @@ def run_delta(selected_dataset_splits, GENERATE_DOMAIN = True, GROUND_IN_SCENE_G
                         model = MODEL
                     )
 
-
+                    plan_length = 0
                     # Save the final problem and plan
                     if planning_succesful and grounding_succesful:
                         final_plan_file_path = os.path.join(results_problem_dir, "plan_final.txt")
@@ -158,9 +158,7 @@ def run_delta(selected_dataset_splits, GENERATE_DOMAIN = True, GROUND_IN_SCENE_G
                             for subplan in subplans:
                                 for action in subplan:
                                     f.write(str(action) + ",\n")
-                        
-                        # Compute the length of the plan as the number of lines
-                        plan_length = len(final_generated_plan.split(", "))
+                                    plan_length += 1
 
                         # Write final generated domain
                         final_generated_domain = open(final_domain_file_path, "r").read()
@@ -188,7 +186,13 @@ def run_delta(selected_dataset_splits, GENERATE_DOMAIN = True, GROUND_IN_SCENE_G
                         writer = csv.writer(f, delimiter='|')
                         writer.writerow([task_dir_name, scene_name, problem_id, planning_succesful, grounding_succesful, "", "", "Exception", exception_str])
                     
-                    break
+                    # Save the exception to statistics.json
+                    save_statistics(
+                        dir=results_problem_dir,
+                        workflow_iteration=0,
+                        phase=CURRENT_PHASE,
+                        exception=e
+                    )
 
 if __name__ == "__main__":
     print_blue("Starting main execution...")
@@ -202,4 +206,4 @@ if __name__ == "__main__":
 #        "other_2",
         "pc_assembly"
     ]
-    run_delta(DATASET_SPLITS, GENERATE_DOMAIN = True, GROUND_IN_SCENE_GRAPH = False, MODEL = "gpt-4o")
+    run_delta(DATASET_SPLITS, GENERATE_DOMAIN = False, GROUND_IN_SCENE_GRAPH = False, MODEL = "gpt-4o")

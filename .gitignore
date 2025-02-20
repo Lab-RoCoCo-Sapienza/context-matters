@@ -177,3 +177,7 @@ third_party
 key.txt
 
 3dscenegraph/
+
+frozen_results/
+
+results/
