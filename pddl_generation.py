@@ -28,8 +28,10 @@ def generate_domain(
         Equality
         Constants
         Derived predicates
+        
 
-    Act as if rooms are all interconnected. Make sure all types are present when using them.
+    IGNORE ROOM CONNECTIONS, YOU CAN MOVE FROM ANY ROOM TO ANY ROOM, WITHOUT THE NEED FOR A PREDICATE
+    DON'T USE NUMERIC VALUES FOR LOCATIONS
 
     Example: 
     A robot in a household environment can perform the following actions on various objects.
@@ -125,7 +127,8 @@ def generate_problem(
     problem_file_path,
     logs_dir,
     workflow_iteration,
-    model = "gpt-4o"
+    model = "gpt-4o",
+    USE_EXAMPLE = False
     ):
 
     # Directly use the provided problem file path since directory structure should exist
@@ -139,10 +142,10 @@ def generate_problem(
         - the representation of the environment (contained within the <environment> XML tags), where the robotic agent will have to execute the resulting plan, as a room to object map
         - the PDDL domain (contained within the <PDDL_planning_domain> XML tags), which defines the actions and predicates that the robot can use to solve the task
         - the task that the robot has to achieve (contained within the <planning_goal> XML tags)
-        - [OPTIONALLY] the initial location of the robot in the environment (contained within the <initial_robot_location> XML tags)
+        - the initial location of the robot in the environment (contained within the <initial_robot_location> XML tags)
         """
 
-    system_prompt += f"""
+    system_prompt += """
         The environment in which the task will have to be satisfied is represented as a dictionary of objects representing a scene graph, with the following features:
         - a list of dictionaries, where each dictionary represents an object with specific properties and attributes.
         - each object includes details such as action affordances, dimensions, material composition, and spatial location.
@@ -162,11 +165,156 @@ def generate_problem(
             DON'T USE NUMERIC VALUES FOR LOCATIONS
         )
 
+        DON'T USE FORALL OR EXISTS OPERATORS IN THE GENERATED PROBLEM
+        IGNORE ROOM CONNECTIONS, YOU CAN MOVE FROM ANY ROOM TO ANY ROOM, WITHOUT THE NEED FOR A PREDICATE
+
         Make sure that all all the objects in the :init block are initialized in the :objects block (do not forget anything).
         Make sure that all rooms and the initial robot location are present in the :objects block and that the initial robot location is correctly initialized.
 
-        ANSWER WITH ONLY THE PDDL AND NOTHING ELSE. Any code other than the PDDL problem will mean that the system will fail. 
-        """
+        ANSWER WITH ONLY THE PDDL AND NOTHING ELSE. Any code other than the PDDL problem will mean that the system will fail.
+    """
+
+    if USE_EXAMPLE:
+        system_prompt += """
+        Example:
+        Given an EXAMPLE_GRAPH, an EXAMPLE_GOAL, and using the predicates defined in EXAMPLE_DOMAIN, a corresponding PDDL problem file looks like GENERATED_PROBLEM.
+
+        EXAMPLE_GRAPH:
+            bathroom_1:
+            - sink_3 - A silver sink made of stainless steel.
+            - vase_7 - A pink glass vase made of ceramic.
+            - toilet_20 - A brown toilet made of ceramic.
+            - potted plant_28 - A blue vase made of glass.
+
+            kitchen_2:
+            - microwave_1 - A black microwave made of metal.
+            - oven_2 - A red stove made of brick.
+            - sink_4 - A blue bathtub made of ceramic.
+            - refrigerator_6 - Red refrigerator made of metal.
+            - bowl_16 - A turquoise bowl made of ceramic.
+            - apple_18 - A red phone made of metal.
+            - apple_19 - red pineapple
+            made of plastic
+            in which you replace red with orange, pineapple with banana, plastic with vinyl
+            - chair_26 - A brown sofa made of leather.
+            - locker_37 - A brown cabinet made of metal.
+            - keyboard into the locker_44 - Black laptop into the metal locker.
+            - mop_11 - A blue mop made of plastic.
+            - bucket_13 - A red bucket made of plastic.
+
+
+            living_room_1:
+            - bowl_17 - A brown plate made of ceramic.
+            - chair_22 - red chair made of leather
+            - chair_25 - A brown chair made of wood.
+            - couch_27 - A brown sofa made of leather.
+            - book_2 - into the shelf_38 - A brown book made of leather.
+            - glass_15 - A brown glass made of glass.
+
+            corridor_6:
+            - headphone into the locker_45 - Black headphones into the locker.
+
+            corridor_7:  - No objects
+
+
+        EXAMPLE_GOAL:
+            Clean the kitchen.
+
+
+        EXAMPLE_DOMAIN:
+            (define (domain house-cleaning-domain)
+
+                (:requirements
+                    :strips
+                    :typing
+                )
+
+                (:types
+                    room locatable - object
+                    robot grabbable bin - locatable
+                    disposable mop - grabbable
+
+                )
+
+                (:predicates
+                    (at ?something - locatable ?where - room)
+                    (is-holding ?who - robot ?something - grabbable)
+                    (is-free ?who - robot)
+                    (thrashed ?what - disposable)
+                    (is-clean ?what - mop)
+                    (is-dirty ?what - mop)
+                    (dirty-floor ?what - room)
+                    (clean-floor ?what - room)
+                )
+
+                (:action move_to
+                    :parameters (?who - robot ?from - room ?to - room)
+                    :precondition (and (at ?who ?from))
+                    :effect (and (not (at ?who ?from)) (at ?who ?to))
+                )
+                
+                (:action grab
+                    :parameters (?who - robot ?what - grabbable ?where - room)
+                    :precondition (and (at ?who ?where) (at ?what ?where) (is-free ?who))
+                    :effect (and (not (at ?what ?where)) (is-holding ?who ?what) (not (is-free ?who)))
+                )
+                
+                (:action drop
+                    :parameters (?who - robot ?what - grabbable ?where - room)
+                    :precondition (and (at ?who ?where) (is-holding ?who ?what))
+                    :effect (and (not (is-holding ?who ?what)) (is-free ?who) (at ?what ?where))
+                )
+                
+                (:action throw_away
+                    :parameters (?who - robot ?what - disposable ?in - bin ?where - room)
+                    :precondition (and (at ?who ?where) (is-holding ?who ?what) (at ?in ?where))
+                    :effect (and (not (is-holding ?who ?what)) (is-free ?who) (thrashed ?what) (not (at ?what ?where)))
+                )
+                
+                (:action mop_floor
+                    :parameters (?who - robot ?with - mop ?where - room)
+                    :precondition (and (at ?who ?where) (is-holding ?who ?with)
+                                (is-clean ?with) (dirty-floor ?where))
+                    :effect (and (not (dirty-floor ?where)) (not (is-clean ?with))
+                            (clean-floor ?where) (is-dirty ?with)    
+                    )
+                )
+                
+                (:action clean_mop
+                    :parameters (?who - robot ?what - mop)
+                    :precondition (and (is-holding ?who ?what) (is-dirty ?what))
+                    :effect (and (not (is-dirty ?what)) (is-clean ?what))
+                )
+            )
+
+
+        GENERATED_PROBLEM:
+            (define (problem house_cleaning)
+            (:domain house-cleaning-domain)
+
+                (:objects
+                    robot - robot
+                    kitchen_2 living_room_1 - room
+                    mop_11 - mop
+                    bucket_13 - grabbable
+                    glass_15 - grabbable
+                )
+                (:init
+                    (at robot kitchen_2)
+                    (at mop_11 kitchen_2)
+                    (at bucket_13 kitchen_2)
+                    (at glass_15 living_room_1)
+                    (dirty-floor kitchen_2)
+                    (dirty-floor living_room_1)
+                )
+                (:goal
+                    (and
+                        (clean-floor kitchen_2)
+                        (clean-floor living_room_1)
+                    )
+                )
+            ) 
+            """
                 
     user_prompt = f"""
         The goal for the robot is the following:
@@ -223,8 +371,8 @@ def refine_problem(
     refinement_iteration,
     pddlenv_error_log = None,
     planner_error_log = None,
-    val_validation_log = None,
-    val_grounding_log = None,
+    VAL_validation_log = None,
+    VAL_grounding_log = None,
     scene_graph_grounding_log = None,
     model = "gpt-4o"
 ):
@@ -241,9 +389,7 @@ def refine_problem(
     # STEP A: Ask LLM for the reason of failure (Diagnosis)
     # ----------------------------------------------------------
     reason_system_prompt = (
-        "You are a helpful planning assistant. You have access to the domain PDDL, "
-        "problem PDDL, planner output, and scene. Your job is to figure out why planning "
-        "might have failed, but do NOT rewrite the problem yet."
+        "You are a helpful planning assistant. You have access to the domain PDDL, problem PDDL, planner output, and scene. Your job is to figure out why planning might have failed, but do NOT rewrite the problem yet."
     )
     reason_user_prompt = f"""
     Below is the domain PDDL file:
@@ -276,19 +422,19 @@ def refine_problem(
         ```
     """
 
-    if val_validation_log is not None:
+    if VAL_validation_log is not None:
         reason_user_prompt += f"""
         An attempt to validate the plan using the VAL PDDL validation tool returned the following error:
         ```
-        {val_validation_log}
+        {VAL_validation_log}
         ```
     """
 
-    if val_grounding_log is not None:
+    if VAL_grounding_log is not None:
         reason_user_prompt += f"""
         An attempt to generate the plan and ground it in the given domain and problem using the VAL PDDL grounding tool returned the following error:
         ```
-        {val_grounding_log}
+        {VAL_grounding_log}
         ```
     """
 
@@ -302,9 +448,9 @@ def refine_problem(
     """
 
     reason_user_prompt += f"""
-    Please provide a clear explanation of the possible reason(s) for the planning failure.
-    at the end provide the suggestion to solve the issues with high details.
-    Focus on diagnosing the issue. Do NOT rewrite the PDDL yet; just explain the error.
+    Please provide a clear explanation of the possible reason(s) for the planning failure.\
+    At the end provide detailed suggestions to solve the issues you found.\
+    Focus on diagnosing the issue. Do NOT rewrite the PDDL yet; just explain the error.\
     Verify if predicates are written correctly, if the objects are correctly defined.
     """
 

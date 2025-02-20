@@ -6,7 +6,7 @@ from dotenv import load_dotenv  # Fix import statement
 import datetime
 import json
 
-from workflow_CM import run_pipeline_CM
+from workflow_CM import run_pipeline_CM, CURRENT_PHASE
 import csv
 import traceback
 
@@ -14,12 +14,15 @@ from utils import (
     read_graph_from_path,
     get_objects, get_rooms,
     get_room_keypoints,
-    copy_file, save_file
+    copy_file, save_file,
+    save_statistics
 )
 
 # Directory of this script
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATASET_DIR = os.path.join(BASE_DIR, "dataset")
+
+
 
 
 def run_CM(selected_dataset_splits, GENERATE_DOMAIN=False, GROUND_IN_SCENE_GRAPH=False, MODEL="gpt-4o"):
@@ -196,6 +199,14 @@ def run_CM(selected_dataset_splits, GENERATE_DOMAIN=False, GROUND_IN_SCENE_GRAPH
                     error_log_path = os.path.join(results_problem_dir, "logs", "error.txt")
                     with open(error_log_path, "w") as error_log_file:
                         traceback.print_exc(file=error_log_file)
+                    
+                    # Save the exception to statistics.json
+                    save_statistics(
+                        dir=results_problem_dir,
+                        workflow_iteration=0,
+                        phase=CURRENT_PHASE,
+                        exception=e
+                    )
 
 def run_CM_for_task_scene(task_dir_name, scene_name, problem_id):
 
@@ -278,13 +289,13 @@ def run_CM_for_task_scene(task_dir_name, scene_name, problem_id):
 if __name__=="__main__":
     
     DATASET_SPLITS = [
-#        "dining_setup",
-#        "house_cleaning",
-#        "laundry",
+        "dining_setup",
+        "house_cleaning",
+        "laundry",
 #        "office_setup",
-        "other_1",
-        "other_2",
-#        "pc_assembly"
+#        "other_1",
+#        "other_2",
+        "pc_assembly"
     ]
     run_CM(DATASET_SPLITS, GENERATE_DOMAIN=False, GROUND_IN_SCENE_GRAPH=False, MODEL="gpt-4o")
 

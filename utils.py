@@ -482,10 +482,14 @@ def save_statistics(
     else:
         with open(stats_file, "r") as f:
             statistics = json.load(f)
+
+        #print(statistics)
+        #print(phase)
         
         if str(workflow_iteration) not in statistics["statistics"]:
             statistics["statistics"][str(workflow_iteration)] = {}
 
+        #print(statistics)
 
         if phase == "PDDL_REFINEMENT":
             if "PDDL_REFINEMENT" not in statistics["statistics"][str(workflow_iteration)]:
@@ -495,6 +499,7 @@ def save_statistics(
         else:
             statistics["statistics"][str(workflow_iteration)][phase] = data
 
+        #print(statistics)
 
     if exception is not None:
         statistics["exception"] = {
