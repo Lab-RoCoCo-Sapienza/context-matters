@@ -1,9 +1,11 @@
 import json
 import datetime
 import os
+from pathlib import Path
+
 from typing import Optional
 
-from utils import print_to_planning_log
+from utils import print_to_planning_log, print_blue
 from agent import llm_call
 
 ##########
@@ -11,7 +13,8 @@ from agent import llm_call
 ##########
 
 def generate_domain(
-    task_file, 
+    domain_file_path,
+    goal_file_path, 
     domain_description, 
     logs_dir=None, 
     model="gpt-4o"
@@ -19,7 +22,14 @@ def generate_domain(
     print_blue("Generating PDDL domain...")
 
     prompt = """
-    Role: You are an excellent PDDL domain generator. Given a description of domain knowledge, you can generate a PDDL domain file.
+    Role: You are an excellent PDDL domain generator. Given a description of the planning domain, given as a description of the domain actions and one of the domain objects, you must generate a PDDL domain file.
+    Make sure the domain file respects the provided description for each action.
+
+    IGNORE ROOM CONNECTIONS, YOU CAN MOVE FROM ANY ROOM TO ANY ROOM, WITHOUT THE NEED FOR A PREDICATE
+    DON'T USE NUMERIC VALUES FOR LOCATIONS
+    MAKE SURE TO DEFINE ALL THE OBJECTS AND PREDICATES NECESSARY FOR THE ACTIONS
+    MAKE SURE TO RESPECT THE SYNTAX
+
     We support the following subset of PDDL1.2:
         STRIPS
         Typing (including hierarchical)
@@ -30,51 +40,151 @@ def generate_domain(
         Derived predicates
         
 
-    IGNORE ROOM CONNECTIONS, YOU CAN MOVE FROM ANY ROOM TO ANY ROOM, WITHOUT THE NEED FOR A PREDICATE
-    DON'T USE NUMERIC VALUES FOR LOCATIONS
-
     Example: 
-    A robot in a household environment can perform the following actions on various objects.
-    For instance, consider the action "mop floor":
-    - Natural Language Description:
-        For mopping the floor, the agent must be in the room and have the mop in hand.
-        The mop must be clean and the floor must not be clean.
-        After performing the action, the floor becomes clean, but the mop becomes dirty and the agent’s battery is no longer full.
-
-    - Corresponding PDDL Definition:
+    DOMAIN DESCRIPTION:
+        "actions": [
+        {
+            "name": "move_to",
+            "description": "The robot moves from one room to another. Arguments: robot, starting room, destination room. Preconditions: The robot is in the starting room. Postconditions: The robot is no longer in the starting room and is now in the destination room."
+        },
+        {
+            "name": "grab",
+            "description": "The robot grabs a grabbable object in a room. Arguments: robot, grabbable object, room. Preconditions: The robot and the object are in the same room, and the robot is free to grab. Postconditions: The robot is holding the object, and the object is no longer in the room."
+        },
+        {
+            "name": "drop",
+            "description": "The robot drops a grabbable object in a room. Arguments: robot, grabbable object, room. Preconditions: The robot is holding the object and is in the room. Postconditions: The robot is no longer holding the object, the robot is free, and the object is in the room."
+        },
+        {
+            "name": "open",
+            "description": "The robot opens a washing machine in a room. Arguments: robot, washing machine, room. Preconditions: The robot and the washing machine are in the same room, and the washing machine is closed. Postconditions: The washing machine is open."
+        },
+        {
+            "name": "close",
+            "description": "The robot closes a washing machine in a room. Arguments: robot, washing machine, room. Preconditions: The robot and the washing machine are in the same room, and the washing machine is open. Postconditions: The washing machine is closed."
+        },
+        {
+            "name": "refill",
+            "description": "The robot refills a washing machine with a cleaning supply in a room. Arguments: robot, washing machine, room, cleaning supply. Preconditions: The robot and the washing machine are in the same room, the robot is holding the cleaning supply, and the washing machine is empty. Postconditions: The washing machine is refilled and no longer empty."
+        },
+        {
+            "name": "put_inside",
+            "description": "The robot puts a cleanable object inside a washing machine in a room. Arguments: robot, cleanable object, washing machine, room. Preconditions: The robot and the washing machine are in the same room, the robot is holding the cleanable object, and the washing machine is open. Postconditions: The robot is no longer holding the cleanable object, the cleanable object is inside the washing machine, and the robot is free."
+        },
+        {
+            "name": "wash",
+            "description": "The robot washes a cleanable object inside a washing machine in a room. Arguments: robot, cleanable object, washing machine, room. Preconditions: The robot and the washing machine are in the same room, the cleanable object is inside the washing machine, the washing machine is closed, and the washing machine is refilled. Postconditions: The cleanable object is clean and no longer dirty."
+        }
+        ],
+        "objects": [
+        {
+            "type": "room",
+            "description": "A room where actions can take place."
+        },
+        {
+            "type": "locatable",
+            "description": "An object that can be located in a room. Includes robots, washing machines, and grabbable objects."
+        },
+        {
+            "type": "robot",
+            "description": "A robot that can perform actions such as moving, grabbing, and interacting with other objects."
+        },
+        {
+            "type": "washing-machine",
+            "description": "A washing machine that can be opened, closed, refilled, and used to wash cleanable objects."
+        },
+        {
+            "type": "grabbable",
+            "description": "An object that can be grabbed by the robot. Includes cleaning supplies and cleanable objects."
+        },
+        {
+            "type": "cleaning-supply",
+            "description": "A supply used for cleaning, such as detergent."
+        },
+        {
+            "type": "cleanable",
+            "description": "An object that can be cleaned, such as clothes."
+        }
+        ]
     
-    (define (domain house_cleaning)
-      (:requirements 
-        :strips
-    )
 
-    (:predicates
-        (agent-at ?r)
-        (has ?agent ?object)
-        (clean ?object)
-        (floor-clean ?r)
-        (battery-full)
-      )
-    
-    (:action mop_floor
-        :parameters (?a - agent ?i - item ?r - room)
-        :precondition 
-        (and
-            (agent_at ?a ?r)
-            (item_is_mop ?i)
-            (item_pickable ?i)
-            (agent_has_item ?a ?i)
-            (mop_clean ?i)
-            (not(floor_clean ?r))
+    GENERATED PDDL DOMAIN
+        (define (domain laundry-domain)
+
+            (:requirements
+                :strips
+                :typing
+            )
+
+            (:types
+                room locatable - object
+                robot washing-machine grabbable - locatable
+                cleaning-supply cleanable - grabbable
+            )
+
+            (:predicates
+                (at ?something - locatable ?where - room)
+                (is-holding ?who - robot ?something - grabbable)
+                (is-free ?who - robot)
+                (is-dirty ?what - cleanable)
+                (is-clean ?what - cleanable)
+                (is-open ?what - washing-machine)
+                (is-closed ?what - washing-machine)
+                (is-refilled ?what - washing-machine)
+                (is-empty ?what - washing-machine)
+                (inside ?what - cleanable ?where - washing-machine)
+            )
+
+            (:action move_to
+                :parameters (?who - robot ?from - room ?to - room)
+                :precondition (and (at ?who ?from))
+                :effect (and (not (at ?who ?from)) (at ?who ?to))
+            )
+            
+            (:action grab
+                :parameters (?who - robot ?what - grabbable ?where - room)
+                :precondition (and (at ?who ?where) (at ?what ?where) (is-free ?who))
+                :effect (and (not (at ?what ?where)) (is-holding ?who ?what) (not (is-free ?who)))
+            )
+            
+            (:action drop
+                :parameters (?who - robot ?what - grabbable ?where - room)
+                :precondition (and (at ?who ?where) (is-holding ?who ?what))
+                :effect (and (not (is-holding ?who ?what)) (is-free ?who) (at ?what ?where))
+            )
+            
+            (:action open
+                :parameters (?who - robot ?what - washing-machine ?where - room)
+                :precondition (and (at ?who ?where) (at ?what ?where) (is-closed ?what))
+                :effect (and (is-open ?what) (not (is-closed ?what)))
+            )
+            
+            (:action close
+                :parameters (?who - robot ?what - washing-machine ?where - room)
+                :precondition (and (at ?who ?where) (at ?what ?where) (is-open ?what))
+                :effect (and (is-closed ?what) (not (is-open ?what)))
+            )
+            
+            (:action refill
+                :parameters (?who - robot ?what - washing-machine ?where - room ?with - cleaning-supply)
+                :precondition (and (at ?who ?where) (at ?what ?where) (is-holding ?who ?with) (is-empty ?what))
+                :effect (and (is-refilled ?what) (not (is-empty ?what)))
+            )
+            
+            (:action put_inside
+                :parameters (?who - robot ?what - cleanable ?in - washing-machine ?where - room) 
+                :precondition (and (at ?who ?where) (at ?in ?where) (is-holding ?who ?what) (is-open ?in))
+                :effect (and (not (is-holding ?who ?what)) (inside ?what ?in) (is-free ?who))
+            )
+            
+            (:action wash
+                :parameters (?who - robot ?what - cleanable ?in - washing-machine ?where - room) 
+                :precondition (and (at ?who ?where) (at ?in ?where) (inside ?what ?in) (is-closed ?in) (is-refilled ?in))
+                :effect (and (is-clean ?what) (not (is-dirty ?what)))
+            )
+            
         )
 
-        :effect 
-        (and
-            (floor_clean ?r)
-            (not(mop_clean ?i))
-            (not(battery_full ?a))
-        )
-    )
     """
 
     question = f"""
@@ -91,7 +201,7 @@ def generate_domain(
     Write only the PDDL domain and nothing more.
     """
 
-    task_description = Path(task_file).read_text()
+    task_description = Path(goal_file_path).read_text()
     question = question.replace("<task>", task_description)
 
     question = question.replace("<domain_description>", str(domain_description))
@@ -108,6 +218,9 @@ def generate_domain(
     )
 
     domaind_pddl = answer.replace("`", "").replace("pddl", "").replace("lisp", "")
+    with open(domain_file_path, "w") as file:
+        file.write(domaind_pddl)
+
 
     return domaind_pddl
 
@@ -128,7 +241,8 @@ def generate_problem(
     logs_dir,
     workflow_iteration,
     model = "gpt-4o",
-    USE_EXAMPLE = False
+    USE_EXAMPLE = False,
+    ADD_PREDICATE_UNDERSCORE_EXAMPLE = True
     ):
 
     # Directly use the provided problem file path since directory structure should exist
@@ -173,6 +287,15 @@ def generate_problem(
 
         ANSWER WITH ONLY THE PDDL AND NOTHING ELSE. Any code other than the PDDL problem will mean that the system will fail.
     """
+
+    if ADD_PREDICATE_UNDERSCORE_EXAMPLE:
+        system_prompt += """
+        MAKE SURE TO ALWAYS USE HYPHENS IN VARIABLE NAMES AND PREDICATES:
+        Positive example:
+        (at-robot ?robot ?room)
+        Negative example:
+        (at_robot ?robot ?room)
+        """
 
     if USE_EXAMPLE:
         system_prompt += """
@@ -443,7 +566,7 @@ def refine_problem(
         reason_user_prompt += f"""
         An attempt to ground the previously generatred plan into the scene graph returned the following error:
         ```
-        {grounding_error_log}
+        {scene_graph_grounding_log}
         ```
     """
 

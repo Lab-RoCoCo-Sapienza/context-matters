@@ -90,6 +90,9 @@ def run_pipeline_CM(
         os.makedirs(problem_dir, exist_ok=True)
 
         problem_file_path = os.path.join(problem_dir, "problem.pddl")
+        
+        if domain_file_path is None:
+            domain_file_path = os.path.join(iteration_dir, "generated_domain.pddl")
 
         logs_dir = os.path.join(iteration_dir, "logs")
         os.makedirs(logs_dir, exist_ok=True)
@@ -100,7 +103,13 @@ def run_pipeline_CM(
 
             # Run the pipeline
             print_green("\n######################\n# GENERATING PDDL DOMAIN #\n######################")
-            domain_pddl = generate_domain(goal_file_path, domain_description, logs_dir=logs_dir, model=model)
+            domain_pddl = generate_domain(
+                domain_file_path=domain_file_path,
+                goal_file_path=goal_file_path, 
+                domain_description=domain_description, 
+                logs_dir=logs_dir, 
+                model=model
+                )
 
             print_cyan("Domain VAL validation check...")
             # CHECK #1
@@ -122,6 +131,7 @@ def run_pipeline_CM(
             
         print_yellow("\n######################\n# GENERATING PROBLEM #\n######################")
         
+        
         problem = generate_problem(
             domain_file_path=domain_file_path, 
             initial_robot_location=initial_robot_location, 
@@ -130,8 +140,10 @@ def run_pipeline_CM(
             problem_file_path=problem_file_path,
             logs_dir=logs_dir,
             workflow_iteration=iteration,
-            model=model
+            model=model,
+            ADD_PREDICATE_UNDERSCORE_EXAMPLE=domain_description is not None
         )
+        # Notice: the underscore example is only used when generating the domain from a description
 
         # CHECK #2
         print_cyan("Domain and Problem VAL validation check...")
