@@ -4,7 +4,7 @@ from pathlib import Path
 from pprint import pprint
 
 from planner import plan_with_output
-from pddl_generation import generate_domain, generate_problem, refine_problem
+from pddl_generation import generate_domain, generate_problem, refine_problem, determine_problem_possibility
 from pddl_verification import translate_plan, VAL_validate, VAL_parse, VAL_ground, verify_groundability_in_scene_graph
 from goal_relaxation import relax_goal, dict_replaceable_objects
 
@@ -42,7 +42,9 @@ def run_pipeline_CM(
     PDDL_GENERATION_ITERATIONS = 4,
     domain_description = None,
     GROUND_IN_SCENE_GRAPH = False,
-    model = "gpt-4o"
+    model = "gpt-4o",
+    DETERMINE_PROBLEM_POSSIBILITY = False,
+    PREVENT_IMPOSSIBLE_PROBLEMS = False
 ):
 
     # SETUP #
@@ -68,6 +70,9 @@ def run_pipeline_CM(
     VAL_validation_log = None
     VAL_grounding_log = None
     planner_statistics = None
+
+    task_possible = None
+    possibility_explanation = None
 
     iteration = 0 # Iteration counter of the outer loop
     refinements_per_iteration = [] # Output data: number of inner loop iterations per outer loop iteration
@@ -97,6 +102,31 @@ def run_pipeline_CM(
         logs_dir = os.path.join(iteration_dir, "logs")
         os.makedirs(logs_dir, exist_ok=True)
         
+        # Prevent impossible problems if the flag is set
+        if DETERMINE_PROBLEM_POSSIBILITY:
+            print_yellow("\n######################\n# PREVENTING IMPOSSIBLE PROBLEMS #\n######################")
+            CURRENT_PHASE="IMPOSSIBLE_PROBLEM_PREVENTION"
+            task_possible, possibility_explanation = determine_problem_possibility(
+                domain_file_path=domain_file_path,
+                initial_robot_location=initial_robot_location,
+                task=current_goal,
+                environment=extracted_scene_graph_str,
+                model=model,
+                logs_dir=logs_dir
+            )
+
+            # save the explanation as an "explanation.txt" in the logs_dir
+            print(os.path.join(results_dir, "logs", "explanation.txt"))
+            with open(os.path.join(results_dir, "logs", "explanation.txt"), "w") as file:
+                file.write(possibility_explanation)
+
+            if task_possible.lower() == "false":
+                print_red(f"IMPOSSIBLE:\n{possibility_explanation}")
+                if PREVENT_IMPOSSIBLE_PROBLEMS:
+                    return problem_file_path, None, current_goal, False, False, False, possibility_explanation, iteration, refinements_per_iteration, goals, CURRENT_PHASE, ""
+            else:
+                print_green("POSSIBLE:\n"+possibility_explanation)
+                #return problem_file_path, None, current_goal, False, False, True, possibility_explanation, iteration, refinements_per_iteration, goals, CURRENT_PHASE, ""
 
         if domain_description is not None:
             print_yellow("\n######################\n# GENERATING DOMAIN #\n######################")
@@ -400,4 +430,4 @@ def run_pipeline_CM(
 
     
     # Return the final problem and plan
-    return problem_file_path, plan_file_path, current_goal, planning_succesful, grounding_succesful, iteration, refinements_per_iteration, goals, "", ""
+    return problem_file_path, plan_file_path, current_goal, planning_succesful, grounding_succesful, task_possible, possibility_explanation, iteration, refinements_per_iteration, goals, "", ""

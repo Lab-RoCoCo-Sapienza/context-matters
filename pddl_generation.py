@@ -225,6 +225,76 @@ def generate_domain(
     return domaind_pddl
 
 
+#################################
+# IMPOSSIBLE PROBLEM PREVENTION #
+#################################
+
+# Ask the LLM if it is possible to achieve the given task with with the given PDDL domain and the given environment (a map room -> object)
+def determine_problem_possibility(
+    domain_file_path,
+    initial_robot_location,
+    task,
+    environment,
+    logs_dir,
+    model = "gpt-4o"
+):
+    # Read the domain
+    with open(domain_file_path, "r") as file:
+        domain_pddl = file.read()
+
+    # Prepare the prompt for the LLM
+    prompt = f"""
+    You are an expert in PDDL planning. Given a task description and a room->object map, determine if it is possible to achieve the task with the objects available in the environment. 
+    If it is not possible, explain why.
+    Please provide a clear explanation of whether the task is achievable or not, and if not, why it is impossible. 
+
+    Make sure you declare a task impossible only if it can not be satisfied with other objects of the scene and/or in no other way.
+    If a relaxed version of the goal can be satisfied, it should be considered possible. A suboptimal solution makes a task possible. 
+    A goal is possible if at least its core objective is satisfiable, even in an suboptimal or unexpected way.
+    An impossible goal should be a goal that is very far from realizable, even by replacing objects or relaxing some constraints.
+    Assume that it is possible to carry all necessary objects.
+    
+    Use the following format for your response:
+
+    <possible>BOOL</possible>
+    <explanation>STRING</explanation>
+
+    where BOOL is either "true" or "false" and STRING is a string explaining why the task is achievable or not.
+
+    Never write outside the pairs of tags <possible> and <explanation>.
+    """
+
+    question=f"""Please determine if the task is achievable or not, and if not, why it is impossible, given the following information:
+
+    Task:
+    ```
+    {task}
+    ```
+
+    Environment:
+    ```
+    {environment}
+    ```
+    """
+
+    # Call the LLM
+    response = llm_call(prompt, question, model=model)
+
+    # Save the response
+    _save_prompt_response(
+        prompt=prompt,
+        response=response,
+        prefix="impossible_problem_prevention",
+        suffix="",
+        output_dir=logs_dir
+    )
+
+    # Parse the response to extract <possible> and <explanation> tags
+    possible = response.split("<possible>")[1].split("</possible>")[0].strip()
+    explanation = response.split("<explanation>")[1].split("</explanation>")[0].strip()
+
+    return possible, explanation
+
 
 ###########
 # PROBLEM #
