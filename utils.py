@@ -347,7 +347,7 @@ def get_verbose_scene_graph(graph: Dict, as_string=True) -> str:
     for o_id, obj_info in objects.items():
         r_id = obj_info.get('parent_room')
         if r_id in rooms:
-            obj_label = obj_id_to_label[o_id]
+            obj_label = obj_id_to_label[o_id].replace("  "," ").replace(" ", "_")
             obj_description = obj_info.get('description', 'No description available')
             room_to_objects[r_id].append((obj_label, obj_description))
     

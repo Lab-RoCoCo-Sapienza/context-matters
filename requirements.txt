@@ -3,3 +3,5 @@ torch
 sentence_transformers
 openai
 opencv-python
+pandas
+tabulate
