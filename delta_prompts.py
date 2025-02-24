@@ -25,48 +25,150 @@ def generate_pddl_domain(task_file, domain_description, logs_dir=None, model="gp
     Act as if rooms are all interconnected. Make sure all types are present when using them.
 
     Example: 
-    A robot in a household environment can perform the following actions on various objects.
-    For instance, consider the action "mop floor":
-    - Natural Language Description:
-        For mopping the floor, the agent must be in the room and have the mop in hand.
-        The mop must be clean and the floor must not be clean.
-        After performing the action, the floor becomes clean, but the mop becomes dirty and the agent’s battery is no longer full.
-
-    - Corresponding PDDL Definition:
+    DOMAIN DESCRIPTION:
+        "actions": [
+        {
+            "name": "move_to",
+            "description": "The robot moves from one room to another. Arguments: robot, starting room, destination room. Preconditions: The robot is in the starting room. Postconditions: The robot is no longer in the starting room and is now in the destination room."
+        },
+        {
+            "name": "grab",
+            "description": "The robot grabs a grabbable object in a room. Arguments: robot, grabbable object, room. Preconditions: The robot and the object are in the same room, and the robot is free to grab. Postconditions: The robot is holding the object, and the object is no longer in the room."
+        },
+        {
+            "name": "drop",
+            "description": "The robot drops a grabbable object in a room. Arguments: robot, grabbable object, room. Preconditions: The robot is holding the object and is in the room. Postconditions: The robot is no longer holding the object, the robot is free, and the object is in the room."
+        },
+        {
+            "name": "open",
+            "description": "The robot opens a washing machine in a room. Arguments: robot, washing machine, room. Preconditions: The robot and the washing machine are in the same room, and the washing machine is closed. Postconditions: The washing machine is open."
+        },
+        {
+            "name": "close",
+            "description": "The robot closes a washing machine in a room. Arguments: robot, washing machine, room. Preconditions: The robot and the washing machine are in the same room, and the washing machine is open. Postconditions: The washing machine is closed."
+        },
+        {
+            "name": "refill",
+            "description": "The robot refills a washing machine with a cleaning supply in a room. Arguments: robot, washing machine, room, cleaning supply. Preconditions: The robot and the washing machine are in the same room, the robot is holding the cleaning supply, and the washing machine is empty. Postconditions: The washing machine is refilled and no longer empty."
+        },
+        {
+            "name": "put_inside",
+            "description": "The robot puts a cleanable object inside a washing machine in a room. Arguments: robot, cleanable object, washing machine, room. Preconditions: The robot and the washing machine are in the same room, the robot is holding the cleanable object, and the washing machine is open. Postconditions: The robot is no longer holding the cleanable object, the cleanable object is inside the washing machine, and the robot is free."
+        },
+        {
+            "name": "wash",
+            "description": "The robot washes a cleanable object inside a washing machine in a room. Arguments: robot, cleanable object, washing machine, room. Preconditions: The robot and the washing machine are in the same room, the cleanable object is inside the washing machine, the washing machine is closed, and the washing machine is refilled. Postconditions: The cleanable object is clean and no longer dirty."
+        }
+        ],
+        "objects": [
+        {
+            "type": "room",
+            "description": "A room where actions can take place."
+        },
+        {
+            "type": "locatable",
+            "description": "An object that can be located in a room. Includes robots, washing machines, and grabbable objects."
+        },
+        {
+            "type": "robot",
+            "description": "A robot that can perform actions such as moving, grabbing, and interacting with other objects."
+        },
+        {
+            "type": "washing-machine",
+            "description": "A washing machine that can be opened, closed, refilled, and used to wash cleanable objects."
+        },
+        {
+            "type": "grabbable",
+            "description": "An object that can be grabbed by the robot. Includes cleaning supplies and cleanable objects."
+        },
+        {
+            "type": "cleaning-supply",
+            "description": "A supply used for cleaning, such as detergent."
+        },
+        {
+            "type": "cleanable",
+            "description": "An object that can be cleaned, such as clothes."
+        }
+        ]
     
-    (define (domain house_cleaning)
-      (:requirements 
-        :strips
-        :typing
-      )
-      (:predicates
-        (agent_at ?a - agent ?r - room)
-        (item_is_mop ?i - item)
-        (item_pickable ?i - item)
-        (agent_has_item ?a - agent ?i - item)
-        (mop_clean ?i - item)
-        (floor_clean ?r - room)
-        (battery_full ?a - agent)
-      )
-      (:action mop_floor
-        :parameters (?a - agent ?i - item ?r - room)
-        :precondition 
-        (and
-            (agent_at ?a ?r)
-            (item_is_mop ?i)
-            (item_pickable ?i)
-            (agent_has_item ?a ?i)
-            (mop_clean ?i)
-            (not (floor_clean ?r))
+
+    GENERATED PDDL DOMAIN
+        (define (domain laundry-domain)
+
+            (:requirements
+                :strips
+                :typing
+            )
+
+            (:types
+                room locatable - object
+                robot washing-machine grabbable - locatable
+                cleaning-supply cleanable - grabbable
+            )
+
+            (:predicates
+                (at ?something - locatable ?where - room)
+                (is-holding ?who - robot ?something - grabbable)
+                (is-free ?who - robot)
+                (is-dirty ?what - cleanable)
+                (is-clean ?what - cleanable)
+                (is-open ?what - washing-machine)
+                (is-closed ?what - washing-machine)
+                (is-refilled ?what - washing-machine)
+                (is-empty ?what - washing-machine)
+                (inside ?what - cleanable ?where - washing-machine)
+            )
+
+            (:action move_to
+                :parameters (?who - robot ?from - room ?to - room)
+                :precondition (and (at ?who ?from))
+                :effect (and (not (at ?who ?from)) (at ?who ?to))
+            )
+            
+            (:action grab
+                :parameters (?who - robot ?what - grabbable ?where - room)
+                :precondition (and (at ?who ?where) (at ?what ?where) (is-free ?who))
+                :effect (and (not (at ?what ?where)) (is-holding ?who ?what) (not (is-free ?who)))
+            )
+            
+            (:action drop
+                :parameters (?who - robot ?what - grabbable ?where - room)
+                :precondition (and (at ?who ?where) (is-holding ?who ?what))
+                :effect (and (not (is-holding ?who ?what)) (is-free ?who) (at ?what ?where))
+            )
+            
+            (:action open
+                :parameters (?who - robot ?what - washing-machine ?where - room)
+                :precondition (and (at ?who ?where) (at ?what ?where) (is-closed ?what))
+                :effect (and (is-open ?what) (not (is-closed ?what)))
+            )
+            
+            (:action close
+                :parameters (?who - robot ?what - washing-machine ?where - room)
+                :precondition (and (at ?who ?where) (at ?what ?where) (is-open ?what))
+                :effect (and (is-closed ?what) (not (is-open ?what)))
+            )
+            
+            (:action refill
+                :parameters (?who - robot ?what - washing-machine ?where - room ?with - cleaning-supply)
+                :precondition (and (at ?who ?where) (at ?what ?where) (is-holding ?who ?with) (is-empty ?what))
+                :effect (and (is-refilled ?what) (not (is-empty ?what)))
+            )
+            
+            (:action put_inside
+                :parameters (?who - robot ?what - cleanable ?in - washing-machine ?where - room) 
+                :precondition (and (at ?who ?where) (at ?in ?where) (is-holding ?who ?what) (is-open ?in))
+                :effect (and (not (is-holding ?who ?what)) (inside ?what ?in) (is-free ?who))
+            )
+            
+            (:action wash
+                :parameters (?who - robot ?what - cleanable ?in - washing-machine ?where - room) 
+                :precondition (and (at ?who ?where) (at ?in ?where) (inside ?what ?in) (is-closed ?in) (is-refilled ?in))
+                :effect (and (is-clean ?what) (not (is-dirty ?what)))
+            )
+            
         )
-        :effect 
-        (and
-            (floor_clean ?r)
-            (not (mop_clean ?i))
-            (not (battery_full ?a))
-        )
-      )
-    )
+
     """
 
     question = f"""
