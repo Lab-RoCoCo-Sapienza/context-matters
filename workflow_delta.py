@@ -50,7 +50,8 @@ def run_pipeline_delta(
         domain_pddl = generate_pddl_domain(goal_file_path, domain_description, logs_dir=logs_dir, model=model)
 
         # Save the generated PDDL domain
-        domain_file_path = os.path.join(results_dir, "domain.pddl")
+        domain_file_path = os.path.join(results_dir, "domain", "domain.pddl")
+        os.makedirs(os.path.dirname(domain_file_path), exist_ok=True)
         with open(domain_file_path, "w") as f:
             f.write(domain_pddl)
     
