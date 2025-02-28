@@ -127,7 +127,7 @@ def load_raw_data(base_dir, model_id, models, tasks, add_whole_statistics=False)
                                             aggregated["num_node_expansions"] += value.get("num_node_expansions", 0)
                                     data[task_id][scene_id][problem_id]["planner_statistics"] = aggregated
                                 else:
-                                    print(re.findall(r"planner_statistics", str(stats_json)))
+                                    #print(re.findall(r"planner_statistics", str(stats_json)))
                                     planner_stats_value = find_last_planner_statistics(stats_json)
                                     if planner_stats_value is not None:
                                         data[task_id][scene_id][problem_id]["planner_statistics"] = planner_stats_value
@@ -135,12 +135,12 @@ def load_raw_data(base_dir, model_id, models, tasks, add_whole_statistics=False)
                                 print(f"Error parsing {statistics_path}: {e}")
                                 raise
 
-    print("\n\n\n")
-    for task_id, task_data in data.items():
-        for scene_id, scene_data in task_data.items():
-            for problem_id, problem_data in scene_data.items():
-                if "planner_statistics" in problem_data.keys():
-                    print(data[task_id][scene_id][problem_id]["planner_statistics"])
+    #print("\n\n\n")
+    #for task_id, task_data in data.items():
+    #    for scene_id, scene_data in task_data.items():
+    #        for problem_id, problem_data in scene_data.items():
+    #            if "planner_statistics" in problem_data.keys():
+    #                print(data[task_id][scene_id][problem_id]["planner_statistics"])
     
     
     possibility_data = {}
@@ -177,7 +177,11 @@ def save_metrics(filepath, metrics):
 
 def compute_global_metrics(raw_data, metrics, tasks, possibility_data=None):
     per_model_metrics = {}
+    tot_problems_tot = 0
+    tot_grounding_tot = 0
     for model, model_data in raw_data.items():
+        print("\n\n")
+        print(model)
         total_problems = 0
         planning_success_count = 0
         grounding_success_count = 0
@@ -246,8 +250,16 @@ def compute_global_metrics(raw_data, metrics, tasks, possibility_data=None):
                     poss_status = (poss if possibility_data is not None else "True")
                     if poss_status == "True" and planning_ok and grounding_ok:
                         success_including_impossible += 1
+            #print("task: "+str(task))
+            #print("grounding_success_count: "+str(grounding_success_count))
+            #print(total_problems)
 
-        global_success_score = round((grounding_success_count / total_problems) * 100, 2) if total_problems > 0 else 0
+        #print("\n\n")
+        #print(grounding_success_count)
+        #print(total_problems)
+        tot_problems_tot += total_problems
+        tot_grounding_tot += grounding_success_count
+        global_success_score = (grounding_success_count / total_problems) * 100 if total_problems > 0 else 0
         global_planning_success_score = round((planning_success_count / total_problems) * 100, 2) if total_problems > 0 else 0
         global_grounding_success_score = round((grounding_success_count / planning_success_count) * 100, 2) if planning_success_count > 0 else 0
         global_average_relaxations = round(total_relaxations / count_CM, 2) if count_CM > 0 else None
@@ -278,11 +290,17 @@ def compute_global_metrics(raw_data, metrics, tasks, possibility_data=None):
             "average_expanded_nodes": avg_expanded_nodes,
             "average_plan_length": avg_plan_length
         }
+        print(tot_problems_tot)
+        print(tot_grounding_tot)
     return per_model_metrics
 
 def compute_per_model_per_task_metrics(raw_data, metrics, tasks, models, possibility_data=None):
     per_model_per_task = {}
+    tot_problems_tot = 0
+    tot_grounding_tot = 0
     for model, model_data in raw_data.items():
+        print("\n\n")
+        print(model)
         per_model_per_task[model] = {}
         for task, task_name in tasks.items():
             total_problems = 0
@@ -352,7 +370,18 @@ def compute_per_model_per_task_metrics(raw_data, metrics, tasks, models, possibi
                         if poss_status == "True" and planning_ok and grounding_ok:
                             success_including_impossible += 1
 
-            success_score = round((grounding_success_count / total_problems) * 100, 2) if total_problems else 0
+                #print("task: "+str(task))
+                #print("grounding_success_count: "+str(grounding_success_count))
+                #print(total_problems)
+
+            print("task: "+str(task))
+            #print("\n\n")
+            #print(grounding_success_count)
+            #print(total_problems)
+            tot_problems_tot += total_problems
+            tot_grounding_tot += grounding_success_count
+            success_score = (grounding_success_count / total_problems) * 100 if total_problems else 0
+            print(success_score)
             planning_success_score = round((planning_success_count / total_problems) * 100, 2) if total_problems else 0
             grounding_success_score = round((grounding_success_count / planning_success_count) * 100, 2) if planning_success_count else 0
             average_relaxations = round(total_relaxations / count_CM, 2) if count_CM else None
@@ -382,6 +411,8 @@ def compute_per_model_per_task_metrics(raw_data, metrics, tasks, models, possibi
                 "average_expanded_nodes": avg_expanded_nodes,
                 "average_plan_length": avg_plan_length
             }
+        print(tot_problems_tot)
+        print(tot_grounding_tot)
     return per_model_per_task
 
 def compute_per_model_per_scene_metrics_ignore_tasks(raw_data, metrics, tasks, models, possibility_data=None):
@@ -485,14 +516,14 @@ if __name__ == "__main__":
 
     # Define models and their architectures
     models = {
-        "CM_gpt-4o_gendomain_groundsg" : "CM + DG + SG",   # CM architecture example
+#        "CM_gpt-4o_gendomain_groundsg" : "CM + DG + SG",   # CM architecture example
         "CM_gpt-4o_gendomain_NOgroundsg" : "CM + DG",
-        "CM_gpt-4o_NOgendomain_groundsg" : "CM + SG",
-        "CM_gpt-4o_NOgendomain_NOgroundsg" : "CM",
-        "delta_gpt-4o_gendomain_groundsg" : "DELTA + DG + SG",  # DELTA architecture example
-        "delta_gpt-4o_gendomain_NOgroundsg" : "DELTA + DG",
-        "delta_gpt-4o_NOgendomain_groundsg" : "DELTA + SG",
-        "delta_gpt-4o_NOgendomain_NOgroundsg": "DELTA"
+#        "CM_gpt-4o_NOgendomain_groundsg" : "CM + SG",
+#        "CM_gpt-4o_NOgendomain_NOgroundsg" : "CM",
+#        "delta_gpt-4o_gendomain_groundsg" : "DELTA + DG + SG",  # DELTA architecture example
+#        "delta_gpt-4o_gendomain_NOgroundsg" : "DELTA + DG",
+#        "delta_gpt-4o_NOgendomain_groundsg" : "DELTA + SG",
+#        "delta_gpt-4o_NOgendomain_NOgroundsg": "DELTA"
     }
 
     # Global metrics definitions:
@@ -547,9 +578,10 @@ if __name__ == "__main__":
     # Save metrics to JSON
     save_metrics(os.path.join(BASE_PATH,'global_metrics.json'), global_metrics)
 
-    pprint(global_metrics)
+    #pprint(global_metrics)
     
 
+    print("\n\n\nTASK/SCENE")
     ##########################
     # PER-TASK/SCENE METRICS #
     ##########################
@@ -573,7 +605,20 @@ if __name__ == "__main__":
     save_metrics(os.path.join(BASE_PATH,'per_model_per_task_metrics.json'), per_model_per_task_metrics)
 
 
-    pprint(per_model_per_task_metrics)
+    #pprint(per_model_per_task_metrics)
+    
+
+    # Compute per-model per-scene metrics, ignoring tasks
+    per_model_per_scene_metrics_ignore_tasks = compute_per_model_per_scene_metrics_ignore_tasks(
+        raw_data,
+        metrics = metrics,
+        tasks = all_tasks,
+        models = models,
+        possibility_data = possibility_raw_data
+    )
+    save_metrics(os.path.join(BASE_PATH,'per_model_per_scene_metrics_ignore_tasks.json'), per_model_per_scene_metrics_ignore_tasks)
+
+    #pprint(per_model_per_scene_metrics_ignore_tasks)
     
 
     # Compute per-model per-scene metrics, ignoring tasks
@@ -588,27 +633,15 @@ if __name__ == "__main__":
 
     #pprint(per_model_per_scene_metrics_ignore_tasks)
 
-    # Compute per-model per-task metrics (models on the rows, tasks on the columns, for each column, a column for each metric)
-    per_model_per_task_metrics = compute_per_model_per_task_metrics(
-        raw_data,
-        metrics = metrics,
-        tasks = all_tasks,
-        models = models,
-        possibility_data = possibility_raw_data
-    )
-    save_metrics(os.path.join(BASE_PATH,'per_model_per_task_metrics.json'), per_model_per_task_metrics)
-
-    pprint(per_model_per_task_metrics)
-    
-
-    # Compute per-model per-scene metrics, ignoring tasks
-    per_model_per_scene_metrics_ignore_tasks = compute_per_model_per_scene_metrics_ignore_tasks(
-        raw_data,
-        metrics = metrics,
-        tasks = all_tasks,
-        models = models,
-        possibility_data = possibility_raw_data
-    )
-    save_metrics(os.path.join(BASE_PATH,'per_model_per_scene_metrics_ignore_tasks.json'), per_model_per_scene_metrics_ignore_tasks)
-
-    #pprint(per_model_per_scene_metrics_ignore_tasks)
+    print("\n\n")
+    # Verify that the average of the per-task success_score on a given model equals the global success_score metrics for the model
+    for model in models.keys():
+        total_model_sr = 0
+        for task in all_tasks.keys():
+            print(per_model_per_task_metrics[model][task]["success_score"])
+            total_model_sr += per_model_per_task_metrics[model][task]["success_score"]
+        avg_sr = total_model_sr / len(all_tasks)
+        print("\n\n")
+        print(avg_sr)
+        print(global_metrics[model]["success_score"])
+        assert avg_sr == global_metrics[model]["success_score"]
