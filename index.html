@@ -3,11 +3,11 @@
 
 <head>
   <meta charset="utf-8">
-  <meta name="description" content="Multi-agent Planning using Visual Language Models">
+  <meta name="description" content="Context Matters!">
   <meta name="keywords"
-    content="Multi-agent Planning">
+    content="Context Matters!">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Embodied Multi-role Open-vocabulary Planning with Online Grounding and Execution</title>
+  <title>Context Matters! Relaxing Goals with LLMs for Feasible 3D Scene Planning  </title>
 
   <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro" rel="stylesheet">
 
@@ -61,9 +61,6 @@
             Related Research
           </a>
           <div class="navbar-dropdown">
-            <a class="navbar-item" href="https://lab-rococo-sapienza.github.io/map-vlm/">
-              ECAI
-            </a>
           </div>
         </div>
       </div>
@@ -78,14 +75,17 @@
         <div class="columns is-centered">
           <div class="column has-text-centered">
             <img style="height:6vw; margin-bottom: 3px;" src ="assets/images/logo.png">
-            <h1 class="title is-2 publication-title">Embodied Multi-role Open-vocabulary Planning with Online Grounding and Execution</h1>
+            <h1 class="title is-2 publication-title">Context Matters! Relaxing Goals with LLMs for Feasible 3D Scene Planning  </h1>
             <h2 class="title is-6 publlication-title">IROS 2024</h2>
             <div class="is-size-6 publication-authors">
               <span class="author-block">
+                <span class="author-block">
+                  <a href=""><i>Emanuele Musumeci</i></a> <sup>1</sup>,
+                </span>
+                <span class="author-block">
+                  <a href="https://www.linkedin.com/in/michele-brienza-ba0292253/"><i>Michele Brienza</i></a> <sup>1</sup>,
+                </span>
                 <a href="https://www.linkedin.com/in/fra-arg/"><i>Francesco Argenziano</i></a> <sup>1</sup>,
-              </span>
-              <span class="author-block">
-                <a href="https://www.linkedin.com/in/michele-brienza-ba0292253/"><i>Michele Brienza</i></a> <sup>1</sup>,
               </span>
               <span class="author-block">
                 <a href="https://www.linkedin.com/in/vincenzo-suriani-549429127/"><i>Vincenzo Suriani </i></a> <sup>2</sup>,
@@ -108,7 +108,7 @@
               <div class="publication-links">
                 <!-- PDF Link. -->
                 <span class="link-block">
-                  <a href="assets/pdf/empower.pdf" class="external-link button is-normal ">
+                  <a href="" class="external-link button is-normal ">
                     <span class="icon">
                       <i class="fas fa-file-pdf"></i>
                     </span>
@@ -116,7 +116,7 @@
                   </a>
                 </span>
                 <span class="link-block">
-                  <a href="https://www.arxiv.org/abs/2408.17379" class="external-link button is-normal ">
+                  <a href="" class="external-link button is-normal ">
                     <span class="icon">
                       <i class="ai ai-arxiv"></i>
                     </span>
@@ -125,7 +125,7 @@
                 </span>
                 <!-- Code Link. -->
                 <span class="link-block">
-                  <a href="https://github.com/Lab-RoCoCo-Sapienza/empower/tree/main" class="external-link button is-normal ">
+                  <a href="https://github.com/Lab-RoCoCo-Sapienza/context-matters" class="external-link button is-normal ">
                     <span class="icon">
                       <i class="fab fa-github"></i>
                     </span>
@@ -142,8 +142,8 @@
   </section>
 
   <div class="container is-max-desktop">
-      <img src="assets/images/iros_methodology.png" alt="Architecture" style="width:150%;">
-      <h5 class="has-text-justified">Complete architecture of EMPOWER, from the task description to the execution of the plan in the world. The RGB image is used to extract a graph of the scene as long as the final plan and the object labels. These labels are then grounded via an NLP pipeline and reprojected onto the pointclouds extracted from the depth image of the robot. Lastly, reference points are computed from these pointclouds to facilitate actions in the world. Use case illustrated: order the objects on the table from the highest to the lowest.</h5>
+      <img src="assets/Intro_vertical_sem.png" alt="Architecture" style="width:80%;">
+      <h5 class="has-text-justified">Our architecture takes as input a 3D Scene Graph [Armeni et al.] of the environment and a task expressed in natural language that may or may not be feasible. The proposed approach can provide a plan up to a certain degree of relaxation to a semantically similar task whenever the goal is not achievable as it is, and a straightforward executable plan in the cases where the goal is immediately feasible. This mimic the capability of humans to change expected outcomes on-the-go depending on the context they live in.</h5>
     </div>
 
   <div style = "margin-top: 3%" class="columns is-centered has-text-centered">
@@ -151,10 +151,12 @@
       <h2 class="title is-3">Abstract</h2>
       <div class="column has-text-justified">
         <p>
-
-          Task planning for robots in real-life settings presents significant challenges. These challenges stem from three primary issues: the difficulty in identifying grounded sequences of steps to achieve a goal; the lack of a standardized mapping between high-level actions and low-level commands; and the challenge of maintaining low computational overhead given the limited resources of robotic hardware.
-          We introduce EMPOWER, a framework designed for open-vocabulary online grounding and planning for embodied agents aimed at addressing these issues. By leveraging efficient pre-trained foundation models and a multi-role mechanism, EMPOWER demonstrates notable improvements in grounded planning and execution.
-          Quantitative results highlight the effectiveness of our approach, achieving an average success rate of 0.73 across six different real-life scenarios using a TIAGo robot. 
+          Classical planning in AI and Robotics addresses complex tasks by shifting from imperative to declarative approaches (e.g., PDDL). 
+          However, these methods often fail in real scenarios due to limited robot perception and the need to ground perceptions to planning predicates. This often results in heavily hard-coded behaviors that struggle to adapt, even with scenarios where goals can be achieved through relaxed planning. Meanwhile, Large Language Models (LLMs) lead to planning systems that leverage commonsense reasoning but often at the cost of generating unfeasible and/or unsafe plans. 
+          To address these limitations, we present an approach integrating classical planning with LLMs, leveraging their ability to extract commonsense knowledge and ground actions. We propose a hierarchical formulation that enables robots to make unfeasible tasks tractable by defining functionally equivalent goals through gradual relaxation. This mechanism supports partial achievement of the intended objective, suited to the agent's specific context.
+          Our method demonstrates its ability to adapt and execute tasks effectively within environments modeled using 3D Scene Graphs through comprehensive quantitative and qualitative evaluations.
+          We also show how this method succeeds in complex scenarios where other benchmark methods are more likely to fail.
+          Code, dataset, and additional material will be made available to the community.
         </p>
       </div>
 
@@ -163,63 +165,25 @@
 
   </div>
 
-  <div style="width:60%;" class="video_item">
-    <video controls>
-        <source src="assets/videos/output_video.mp4" type="video/mp4">
-        Your browser does not support the video tag.
-    </video>
-</div>
 
 
   <div style = "margin-top: 3%" class="columns is-centered has-text-centered">
     <div class="column is-four-fifths">
       <h2 class="title is-3">Approach</h2>
       <div class="column has-text-justified">
-        <p>Our work consists of three components: a planner that generates a plan from a task description with a multi-role architecture; a model that grounds the plan in the environment 
-          using NLP techniques and an executor that executes the plan on a robot mapping the high-level actions to low-level commands. Thanks to the use of 
-          The contributions of our work are the following:
-            <li> We propose a multi-role, single-body hierarchical subtask division that enables complex reasoning about the
-              scene and allows for the creation of plans that can be grounded in the environment;</li>
-            <li>We present a complete pipeline that incorporates FMs
-              for extracting meaningful information from the world,
-              while being resilient to the online constraint given by
-              the limited computational resources of real robots;</li>
-            <li>We provide a flexible solution that, thanks to our
-              novel open-vocabulary framework, grounds and deploys plans across different robotic platforms in the
-              environment. </li>
-            Our approach enables planning for embodied agents in an open vocabulary setting through NLP-driven semantic comprehension of scene elements. We first assess the improvement in high-level planning by comparing our multi-role VLM-based architecture to a single-role approach.
-            Subsequently, we evaluate the system's full planning capabilities, from high to low levels, by executing tasks with a TIAGo robot in real environments and measuring the success rate.
+        <p>
+
+      The main contributions of this work are as follows:
+      <li>A hierarchical formulation that leverages contextual information to divide tasks into sub-components. This enables robots to reason effectively about their environment, represent problems along two axes of feasibility and functionality, and create grounded, executable plans that outperform the current state of the art (SOTA) in handling complex tasks.
+      </li><li> A bidirectional feasibility formalism to iteratively adapt tasks to be feasible within the given context. We relax the functional requirements and goal achievements to ensure practical task execution while maintaining alignment with high-level objectives.
+      </li><li> We release a novel framework that integrates LLMs for reasoning and planning in an open-vocabulary setting. By incorporating contextual understanding, the framework supports robust action grounding and flexible planning across diverse and dynamic environments.
+      </li><li>We publish a dataset containing everyday scenarios described through 3DSceneGraph [Armeni et al.] representations within the Gibson Environment. Our dataset includes everyday tasks specifically adapted to the robot environment, with varied difficulty levels. Ground truth data (PDDL domain, PDDL problem, and plan) for the scenarios are also generated using our architecture.
+      </li>
         </p>
       </div>
 
     </div>
   </div>
-
-  <div style = "margin-top: 3%" class="columns is-centered has-text-centered">
-    <div class="column is-four-fifths">
-      <h2 class="title is-3">Experiments</h2>
-      <div class="column has-text-justified">
-        <p>Our tests focus on six representative use cases that we have designed to test the planning capabilities of the LLMs for indoor tasks that require multi-step reasoning and manipulations.
-           These cases are: sort object by their height, grab a jacket on the coat rack, throw the objects in the right recycle bins, order the shelf to have 2 objects per level,
-            order the shelf depending on the objects’ material, exit the room.
-
-
-        </p>    <div class="containeritem">
-          <div class="column">
-              <ul>
-                  <li><a href="experiments/recycle.html">recycle the objects</a></li>
-                  <li><a href="experiments/height_order.html">order the objects by height</a></li>
-                  <li><a href="experiments/jacket.html">give me the jacket</a></li>
-              </ul>
-          </div>
-          <div class="column">
-              <ul>
-                  <li><a href="experiments/order_shelf.html">order the shelf by number of objects</a></li>
-                  <li><a href="experiments/order_material.html">order the shelf by objects' material</a></li>
-                  <li><a href="experiments/exit.html">exit the room</a></li>
-              </ul>
-          </div>
-      </div>
 
 
 
@@ -228,14 +192,7 @@
   <section class="section" id="BibTeX">
     <div class="container is-max-desktop content">
       <h2 class="title">BibTeX</h2>
-      <pre><code>@article{argenziano2024empowerembodiedmultiroleopenvocabulary,
-        title={EMPOWER: Embodied Multi-role Open-vocabulary Planning with Online Grounding and Execution}, 
-        author={Francesco Argenziano and Michele Brienza and Vincenzo Suriani and Daniele Nardi and Domenico D. Bloisi},
-        year={2024},
-        eprint={2408.17379},
-        archivePrefix={arXiv},
-        primaryClass={cs.RO},
-        url={https://arxiv.org/abs/2408.17379}, }</code></pre>
+      <pre><code></code></pre>
     </div>
   </section>
 
