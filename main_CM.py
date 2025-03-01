@@ -228,17 +228,17 @@ def run_CM(selected_dataset_splits, GENERATE_DOMAIN=False, GROUND_IN_SCENE_GRAPH
 if __name__=="__main__":
     
     DATASET_SPLITS = [
-        "dining_setup",
-        "house_cleaning",
+#        "dining_setup",
+#        "house_cleaning",
         "laundry",
-        "office_setup",
+#        "office_setup",
 #        "office_setup_one_slot",
 #        "other_1",
 #        "other_2",
 #        "pc_assembly"
 #        "impossible_tasks"
     ]
-    run_CM(DATASET_SPLITS, GENERATE_DOMAIN=False, GROUND_IN_SCENE_GRAPH=False, MODEL="gpt-4o", DETERMINE_PROBLEM_POSSIBILITY=True, PREVENT_IMPOSSIBLE_PROBLEMS=True)
+    run_CM(DATASET_SPLITS, GENERATE_DOMAIN=True, GROUND_IN_SCENE_GRAPH=False, MODEL="gpt-4o", DETERMINE_PROBLEM_POSSIBILITY=False, PREVENT_IMPOSSIBLE_PROBLEMS=False)
     #run_CM(DATASET_SPLITS, GENERATE_DOMAIN=False, GROUND_IN_SCENE_GRAPH=True, MODEL="gpt-4o", PREVENT_IMPOSSIBLE_PROBLEMS=True)
     #run_CM(DATASET_SPLITS, GENERATE_DOMAIN=True, GROUND_IN_SCENE_GRAPH=False, MODEL="gpt-4o")
     #run_CM(DATASET_SPLITS, GENERATE_DOMAIN=True, GROUND_IN_SCENE_GRAPH=True, MODEL="gpt-4o")
