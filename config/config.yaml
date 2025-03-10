@@ -1,0 +1,26 @@
+pipeline:
+  generate_domain: True
+  ground_in_sg: False
+  determine_possibility: False
+  prevent_impossibility: False
+
+splits:
+  - dining_setup
+  - house_cleaning
+  - laundry
+  - office_cleaning
+  - other_1
+  - other_2
+  - pc_assembly
+  - impossible_tasks
+  
+agents:
+  model: gpt-4o
+
+methods:
+  - cm
+  - delta
+
+parameters:
+  workflow_iterations: 4
+  pddl_gen_iterations: 4
