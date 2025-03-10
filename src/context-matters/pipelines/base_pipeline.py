@@ -1,3 +1,4 @@
+import os
 from typing import Dict, List
 class BasePipeline:
     def __init__(self, **kwargs):
@@ -8,6 +9,9 @@ class BasePipeline:
         self.generate_domain: bool = kwargs["generate_domain"]
         self.ground_in_sg: bool = kwargs["ground_in_sg"]
         self.model: str = kwargs["model"]
+        
+        self.api_key: str = os.getenv("API_KEY")
+        
         self.scenes_per_task: Dict = {
             "dining_setup": ["Allensville", "Parole", "Shelbiana"],
             "house_cleaning": ["Allensville", "Parole", "Shelbiana"],

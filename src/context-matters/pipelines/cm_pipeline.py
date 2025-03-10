@@ -2,9 +2,21 @@ import os
 import json
 import csv
 import traceback
+from pathlib import Path
 
 from .base_pipeline import BasePipeline
-from src.utils import copy_file, save_file, save_statistics
+from utils import (
+    copy_file, save_file, save_statistics,
+    read_graph_from_path,
+    get_verbose_scene_graph,
+    print_red, print_green, print_blue,
+    print_yellow, print_magenta, print_cyan,
+)
+
+from planner import plan_with_output
+from pddl_generation import generate_domain, generate_problem, refine_problem, determine_problem_possibility
+from pddl_verification import translate_plan, VAL_validate, VAL_ground, verify_groundability_in_scene_graph
+from goal_relaxation import relax_goal, dict_replaceable_objects
 
 
 class ContextMattersPipeline(BasePipeline):
@@ -105,10 +117,11 @@ class ContextMattersPipeline(BasePipeline):
             )
 
     def _run_and_log_pipeline(self, task_name, scene_name, problem_id, results_problem_dir,
-                                domain_file_path, domain_description, scene_graph_file_path,
-                                csv_filepath):
+                            domain_file_path, domain_description, scene_graph_file_path,
+                            csv_filepath):
         try:
-            results = self.run_pipeline(
+            # Run the pipeline
+            results = self.bidimensional_planning(
                 goal_file_path=os.path.join(results_problem_dir, "task.txt"),
                 initial_location_file_path=os.path.join(results_problem_dir, "init_loc.txt"),
                 scene_graph_file_path=scene_graph_file_path,
@@ -119,40 +132,96 @@ class ContextMattersPipeline(BasePipeline):
                 results_dir=results_problem_dir,
                 domain_description=domain_description,
             )
+            
+            (final_problem_file_path, final_plan_file_path, final_goal,
+                planning_successful, grounding_successful, task_possible,
+                possibility_explanation, n_relaxations, refinements_per_iteration,
+                goal_relaxations, failure_stage, failure_reason, current_phase
+            ) = results
 
-            self._save_pipeline_outputs(
-                results_problem_dir, results, csv_filepath, task_name, scene_name, problem_id
+            # Save the final problem and plan if successful
+            plan_length = 0
+            if planning_successful and grounding_successful:
+                with open(final_problem_file_path, "r") as f:
+                    save_file(f.read(), os.path.join(results_problem_dir, "problem_final.pddl"))
+
+                with open(final_plan_file_path, "r") as f:
+                    final_generated_plan = f.read()
+                    save_file(final_generated_plan, os.path.join(results_problem_dir, "plan_final.txt"))
+                    plan_length = len(final_generated_plan.split(", "))
+
+            # Save the relaxed goal if any relaxations occurred
+            if n_relaxations > 0:
+                save_file(final_goal, os.path.join(results_problem_dir, "task_final.txt"))
+
+            # Format refinements and goal relaxations
+            refinements_per_iteration_str = ";".join(map(str, refinements_per_iteration))
+            goal_relaxations_str = "; ".join(
+                f"'{relax.strip().replace('\n', ' ').replace('\r', '')}'"
+                for relax in goal_relaxations
             )
-        except Exception as e:
-            self._log_exception(e, csv_filepath, task_name, scene_name, problem_id, results_problem_dir)
 
-    def _save_pipeline_outputs(self, results_dir, results, csv_filepath,
-                                task_name, scene_name, problem_id):
-        (final_problem_file_path, final_plan_file_path, final_goal, planning_successful, grounding_successful,
-            task_possible, possibility_explanation, n_relaxations, refinements_per_iteration, goal_relaxations,
-            failure_stage, failure_reason, _) = results
-
-        plan_length = 0
-        if planning_successful and grounding_successful:
-            save_file(open(final_problem_file_path).read(), os.path.join(results_dir, "problem_final.pddl"))
-            final_plan = open(final_plan_file_path).read()
-            save_file(final_plan, os.path.join(results_dir, "plan_final.txt"))
-            plan_length = len(final_plan.split(", "))
-
-        if n_relaxations > 0:
-            save_file(final_goal, os.path.join(results_dir, "task_final.txt"))
-
-        goal_relaxations_str = "; ".join(goal_relaxations)
-        with open(csv_filepath, mode="a", newline='') as f:
-            writer = csv.writer(f, delimiter='|')
-            writer.writerow([
-                task_name, scene_name, problem_id, planning_successful, grounding_successful,
-                plan_length, n_relaxations, ";".join(map(str, refinements_per_iteration)), goal_relaxations_str,
-                failure_stage, failure_reason
-            ])
-
-        if self.determine_possibility:
-            with open(os.path.join(results_dir, "possibility.csv"), mode="a", newline='') as f:
+            # Save results to the main CSV file
+            with open(csv_filepath, mode="a", newline='') as f:
                 writer = csv.writer(f, delimiter='|')
-                writer.writerow([task_name, scene_name, problem_id, task_possible,
-                                possibility_explanation.strip().replace('\n', ' ').replace('\r', '')])
+                writer.writerow([
+                    task_name, scene_name, problem_id, planning_successful, grounding_successful,
+                    plan_length, n_relaxations, refinements_per_iteration_str,
+                    goal_relaxations_str, failure_stage, failure_reason
+                ])
+
+            # Save the possibility result if enabled
+            if self.determine_possibility:
+                with open(os.path.join(self.results_dir, "possibility.csv"), mode="a", newline='') as f:
+                    writer = csv.writer(f, delimiter='|')
+                    writer.writerow([
+                        task_name, scene_name, problem_id, task_possible,
+                        possibility_explanation.strip().replace('\n', ' ').replace('\r', '')
+                    ])
+
+        except Exception as e:
+            exception_str = str(e).strip().replace('\n', ' ').replace('\r', '')
+
+            # Log the exception in the main CSV file
+            with open(csv_filepath, mode="a", newline='') as f:
+                writer = csv.writer(f, delimiter='|')
+                writer.writerow([
+                    task_name, scene_name, problem_id, f"Exception: {exception_str}",
+                    "", "", "", "", "", "", ""
+                ])
+
+            # Log the possibility failure if enabled
+            if self.determine_possibility:
+                with open(os.path.join(self.results_dir, "possibility.csv"), mode="a", newline='') as f:
+                    writer = csv.writer(f, delimiter='|')
+                    writer.writerow([task_name, scene_name, problem_id, False, f"Exception: {exception_str}"])
+
+            # Write the exception traceback to error.txt
+            error_log_path = os.path.join(results_problem_dir, "logs", "error.txt")
+            with open(error_log_path, "w") as error_log_file:
+                traceback.print_exc(file=error_log_file)
+
+            # Save exception details to statistics.json
+            save_statistics(
+                dir=results_problem_dir,
+                workflow_iteration=0,
+                phase=current_phase,
+                exception=e
+            )
+            
+        return
+    
+    def bidimensional_planning(**kwargs):
+        
+        goal_file_path = kwargs["goal_file_path"]
+        initial_location_file_path = kwargs["initial_location_file_path"]
+        scene_graph_file_path = kwargs["scene_graph_file_path"]
+        description_file_path = kwargs["description_file_path"]
+        domain_file_path = kwargs["domain_file_path"]
+        scene_name = kwargs["scene_name"]
+        problem_id = kwargs["problem_id"]
+        results_dir = kwargs["results_dir"]
+        domain_description = kwargs["domain_description"]
+        
+        
+        
