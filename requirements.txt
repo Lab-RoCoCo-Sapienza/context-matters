@@ -9,3 +9,4 @@ pypandoc
 great_tables
 numpy
 six
+omegaconf

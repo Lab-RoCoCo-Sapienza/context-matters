@@ -1,7 +1,5 @@
-from pprint import pprint
 import os
 
-import pddlgym
 from pddlgym.core import PDDLEnv
 from pddlgym_planners.fd import FD
 import traceback

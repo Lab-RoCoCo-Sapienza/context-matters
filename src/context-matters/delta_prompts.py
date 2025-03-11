@@ -1,15 +1,13 @@
 import json
-import os
 from pathlib import Path
-from pprint import pprint
 
-
+from logger_cfg import logging
 from agent import llm_call
-from utils import print_blue, read_graph_from_path, filter_graph
+from utils import read_graph_from_path, filter_graph
 from pddl_generation import _save_prompt_response
 
 def generate_pddl_domain(task_file, domain_description, logs_dir=None, model="gpt-4o"):
-    print_blue("Generating PDDL domain...")
+    logging.debug("Generating PDDL domain...")
 
     prompt = """
     Role: You are an excellent PDDL domain generator. Given a description of domain knowledge, you can generate a PDDL domain file.
@@ -207,7 +205,7 @@ def generate_pddl_domain(task_file, domain_description, logs_dir=None, model="gp
 
 
 def prune_scene_graph(scene_graph_path, goal_description_path, initial_robot_location=None, logs_dir=None, model="gpt-4o"):
-    print_blue("Pruning Scene Graph...")
+    logging.debug("Pruning Scene Graph...")
     
     prompt = """
     Role: You are an excellent assistant in pruning SGs with a list of SG items and a goal description.
@@ -350,7 +348,7 @@ def prune_scene_graph(scene_graph_path, goal_description_path, initial_robot_loc
     return pruned_sg
 
 def generate_pddl_problem(pruned_scene_graph, goal_description_path, domain_pddl_path, initial_robot_location=None, logs_dir=None, model="gpt-4o"):
-    print_blue("Generating PDDL problem...")
+    logging.debug("Generating PDDL problem...")
 
     prompt = """
     Role: You are an excellent problem generator. Given a Scene Graph (SG) and a desired goal,
@@ -594,7 +592,7 @@ def generate_pddl_problem(pruned_scene_graph, goal_description_path, domain_pddl
     return problem_pddl
 
 def decompose_pddl_goal(problem_pddl_path, domain_pddl_path, initial_robot_location=None, logs_dir=None, model="gpt-4o"):
-    print_blue("Decomposing PDDL goal...")
+    logging.debug("Decomposing PDDL goal...")
     """
     Scompone gli obiettivi di un file PDDL del problema in una sequenza di sotto-obiettivi (sub-goals).
     """

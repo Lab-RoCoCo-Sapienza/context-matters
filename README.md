@@ -2,20 +2,14 @@
 
 # Install
 
-1) Make sure git-lfs is installed:
-```
-sudo apt-get install git-lfs
-```
-
-2) Clone this repo
+1) Clone this repo
 ```
 git clone --recurse-submodules https://github.com/Lab-RoCoCo-Sapienza/context-matters.git
 ```
 
-3) Setup a virtual environment and install the requirements.txt
+2) Setup a virtual environment (conda, venv, ...) and install the requirements.txt
+
 ```
-python3 -m venv .venv
-. .venv/bin/activate
 pip install -r requirements.txt
 ```
    
@@ -42,11 +36,24 @@ make
 ## Dataset creator
 Make sure the virtual environment is activated, then run 
 ```
+cd dataset/
 python3 dataset_creation.py
 ```
 
 ## Main workflow
-Make sure the virtual environment is activated, then run 
+Make sure the virtual environment is activated.
+Export the following environment variables
 ```
-python3 main.py
+export BASE_DIR=/path/to/main/repo
+export DATA_DIR=/path/to/dataset/repo
+export RESULTS_DIR=/path/to/save/results
+export OPENAI_API_KEY=<your OpenAI API key>
+```
+
+In `config/config.yaml` you can find all the config parameters of our architecture.
+You can modify them by simply changing their values in the yaml file.
+
+To run the architecture with one (CM/DELTA) or both models, simply run
+```
+./scripts/run.sh
 ```

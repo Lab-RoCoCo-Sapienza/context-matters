@@ -1,11 +1,8 @@
 import json
-import datetime
 import os
 from pathlib import Path
 
-from typing import Optional
-
-from utils import print_to_planning_log, print_blue
+from utils import print_blue
 from agent import llm_call
 
 ##########
