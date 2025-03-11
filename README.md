@@ -13,18 +13,18 @@ git clone --recurse-submodules https://github.com/Lab-RoCoCo-Sapienza/context-ma
 pip install -r requirements.txt
 ```
    
-4) Install the pddlgym_planners submodule
+3) Install the pddlgym_planners submodule
 ```
 cd third-party/pddlgym_planners/
 pip install -e
 ```
    
-5) Install ollama
+4) Install ollama
 ```
 sudo snap install ollama
 ```
 
-6) Build VAL
+5) Build VAL
 ```
 bash third-party/VAL/scripts/linux/build_linux64.sh build Release
 cd third-party/VAL/build/linux64/Release
