@@ -440,7 +440,7 @@ def save_statistics(
     dir,
     workflow_iteration,
     pddl_refinement_iteration=None,
-    plan_succesful=None,
+    plan_successful=None,
     pddlenv_error_log=None,
     planner_error_log=None,
     planner_statistics=None,
@@ -452,7 +452,7 @@ def save_statistics(
 ):
 
     data = {
-        "plan_succesful": plan_succesful,
+        "plan_successful": plan_successful,
         "pddlenv_error_log": pddlenv_error_log,
         "planner_error_log": planner_error_log,
         "planner_statistics": planner_statistics,
