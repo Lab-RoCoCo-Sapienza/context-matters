@@ -139,13 +139,6 @@ def save_file(data: str, path: str):
         f.write(data)
 
 
-def load_knowledge_graph(kg_path):
-    with open(kg_path, "rb") as f:
-        # Load json file
-        kg = json.load(f)
-    return kg
-
-
 def save_statistics(
     phase,
     dir,

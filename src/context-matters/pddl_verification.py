@@ -6,8 +6,8 @@ import re
 from pddlgym.core import InvalidAction
 
 
-from planner import run_planner_FD, execute_plan, execute_action, initialize_pddl_environment
-from utils import load_knowledge_graph, read_graph_from_path, get_verbose_scene_graph
+from planner import run_planner_FD, execute_action, initialize_pddl_environment
+from utils import read_graph_from_path, get_verbose_scene_graph
 
 def convert_JSON_to_verbose_SG(scene_graph):
     locations = {}
@@ -77,12 +77,10 @@ def verify_subplan_groundability(pddlgym_environment, graph, locations_dictionar
         if hallucinated_obj or hallucinated_loc:
             return 0, f"Hallucinated object: {hallucinated_obj}, Hallucinated location: {hallucinated_loc}"
         
-        location = to_location
         successful_actions += 1
 
 
 
-    objects_to_find = []
     for action in subplan["actions"]:
 
         try:
@@ -263,7 +261,7 @@ def verify_groundability_in_scene_graph(
         pddlgym_environment.fix_problem_index(problem_index)
 
         # Produce initial observation
-        initial_observation, debug_info = pddlgym_environment.reset()
+        initial_observation, _ = pddlgym_environment.reset()
 
     # Find initial robot location from initial observation of the PDDLGym environment (the initial location of the robot in the PDDL problem)
     initial_PDDL_robot_location, robot_name = find_robot_location(initial_observation, location_relation_str)
@@ -333,7 +331,7 @@ def verify_groundability_in_scene_graph(
             if current_subplan["actions"]:
                 subplans.append(current_subplan)
 
-            from_location, to_location = extract_locations_from_movement_action(action)
+            _, to_location = extract_locations_from_movement_action(action)
 
             current_subplan = {
                 "move_action": action,
@@ -428,10 +426,6 @@ def VAL_validate(domain_file_path, problem_file_path=None, plan_path=None):
 
     # Parse the validation output
     validation_successful = False
-    #goal_satisfied = False
-    #type_checking_str = None
-    #validation_process_str = None
-    #plan_repair_advice = None
 
     # Check for a successful plan validation
     if plan_path is not None:
@@ -441,25 +435,6 @@ def VAL_validate(domain_file_path, problem_file_path=None, plan_path=None):
     else:
         if "fail" not in output_text:
             validation_successful = True
-
-    # Check if goal is explicitly not satisfied
-    #if "Goal not satisfied" in output_text:
-    #    goal_satisfied = False
-#
-    ## Extract type-checking section
-    #type_check_match = re.search(r"(Type-checking.*?passes type checking\.)+", output_text, re.DOTALL)
-    #if type_check_match:
-    #    type_checking_str = type_check_match.group().strip()
-#
-    ## Extract validation process logs
-    #validation_process_match = re.search(r"Checking plan:.*?Plan executed successfully.*?", output_text, re.DOTALL)
-    #if validation_process_match:
-    #    validation_process_str = validation_process_match.group().strip()
-#
-    ## Extract plan repair advice if the plan is invalid
-    #repair_match = re.search(r"Plan Repair Advice:\n\n(.*?)\n\nFailed plans:", output_text, re.DOTALL)
-    #if repair_match:
-    #    plan_repair_advice = repair_match.group(1).strip()
 
     return validation_successful, output_text
 
@@ -487,7 +462,6 @@ def VAL_parse(domain_file_path, problem_file_path=None):
     
     result = subprocess.run(command, capture_output=True, text=True)
     result_str = result.stdout.strip().split("\n")
-    #print(result_str)
 
     if "Errors: 0" in result_str[-1]:
         return True, ""
@@ -498,8 +472,6 @@ if __name__ == "__main__":
 
 
     def perform_test(problem_dir):
-
-        #knowledge_graph = load_knowledge_graph(os.path.join(problem_dir, "kg.json"))
 
         # Look for a file with extension .npz, get its path
         path_graph = ""

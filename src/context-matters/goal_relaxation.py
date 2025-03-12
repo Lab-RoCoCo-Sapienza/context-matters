@@ -12,19 +12,12 @@ def get_graph_and_task(problem_dir):
     return graph, task
 
 
-
-
 def dict_replaceable_objects(graph, task, workflow_iteration=None, logs_dir=None):
-    #print(graph)
-
-    #print("\n\n______________________\n\n")
-    #print(task)
 
     system_prompt = open(os.path.join("prompt", "replace_objects.txt"),"r").read()
     user_prompt = "SCENE: \n" + graph + "\n\nTASK: \n" + task
 
     answer = llm_call(system_prompt, user_prompt, temperature=0.1, top_p=1)
-    #print(answer)
     
     if logs_dir is not None:
         _save_prompt_response(
