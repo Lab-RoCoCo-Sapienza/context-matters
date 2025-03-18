@@ -22,7 +22,7 @@
 [![license](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
 ![flat](https://img.shields.io/badge/python-3.10+-green)
 ![flat](https://img.shields.io/badge/Ubuntu-22.04-violet)
-![flat](https://img.shields.io/badge/Ubuntu-24.04+-violet)
+![flat](https://img.shields.io/badge/Ubuntu-24.04-violet)
 
 
 </div>
