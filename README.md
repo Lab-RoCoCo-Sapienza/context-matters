@@ -1,6 +1,6 @@
 <div align="center">
 <h1 style="font-size: 50px">Context Matters!</h1> 
-<img src="assets/cm.png" width=20%>
+<img src="assets/cm.png" width=40%>
 <h2>Relaxing Goals with LLMs for Feasible 3D Scene Planning</h2>
 
 <a href="https://scholar.google.com/citations?user=XLcFkmUAAAAJ&hl=it&oi=ao">Emanuele Musumeci</a><sup><span>1,*</span></sup>,
