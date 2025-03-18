@@ -67,7 +67,7 @@ python3 dataset_creation.py
 
 # Run
 
-2. Make sure the virtual environment is activated, then export the following environment variables
+1. Make sure the virtual environment is activated, then export the following environment variables
 ```
 export BASE_DIR=/path/to/main/repo
 export DATA_DIR=/path/to/dataset/repo
@@ -77,7 +77,7 @@ export OPENAI_API_KEY=<your OpenAI API key>
 In `config/config.yaml` you can find all the config parameters of our architecture.
 You can modify them by simply changing their values in the yaml file.
 
-3. To run the architecture with one (CM/DELTA) or both models, simply run
+2. To run the architecture with one (CM/DELTA) or both models, simply run
 ```
 ./scripts/run.sh
 ```
