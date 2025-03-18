@@ -21,6 +21,9 @@
 [![arxiv paper](https://img.shields.io/badge/arXiv-SOON-red)](https://lab-rococo-sapienza.github.io/contetx-matters/)
 [![license](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
 ![flat](https://img.shields.io/badge/python-3.10+-green)
+![flat](https://img.shields.io/badge/Ubuntu-22.04-violet)
+![flat](https://img.shields.io/badge/Ubuntu-24.04+-violet)
+
 
 </div>
 <h5>Image credits to: https://www.adexchanger.com/comic-strip/adexchanger-context-matters/</h5>
