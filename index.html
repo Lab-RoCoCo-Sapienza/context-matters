@@ -53,17 +53,7 @@
         <span aria-hidden="true"></span>
       </a>
     </div>
-    <div class="navbar-menu">
-      <div class="navbar-start" style="flex-grow: 1; justify-content: center;">
 
-        <div class="navbar-item has-dropdown is-hoverable">
-          <a class="navbar-link">
-            Related Research
-          </a>
-          <div class="navbar-dropdown">
-          </div>
-        </div>
-      </div>
 
     </div>
   </nav>
@@ -75,7 +65,7 @@
         <div class="columns is-centered">
           <div class="column has-text-centered">
             <h1 class="title is-2 publication-title">Context Matters! Relaxing Goals with LLMs for Feasible 3D Scene Planning  </h1>
-            <h2 class="title is-6 publlication-title">IROS 2025</h2>
+            <h2 class="title is-6 publlication-title"><a href="http://www.iros25.org/">IROS 2025</a></h2>
             <div class="is-size-6 publication-authors">
               <span class="author-block">
                 <span class="author-block">
@@ -131,6 +121,14 @@
                     <span>Code</span>
                   </a>
                 </span>
+                <span class="link-block">
+                  <a href="./dataset.html" class="external-link button is-normal ">
+                    <span class="icon">
+                        <i class="fas fa-database"></i>
+                    </span>
+                    <span>Dataset</span>
+                  </a>
+                </span>
               </div>
 
             </div>
@@ -140,54 +138,100 @@
     </div>
   </section>
 
-  <div class="container is-max-desktop">
-      <img src="assets/Intro_vertical_sem.png" alt="Architecture" style="width:150%;">
-      <h5 class="has-text-justified">Our architecture takes as input a 3D Scene Graph [Armeni et al.] of the environment and a task expressed in natural language that may or may not be feasible. The proposed approach can provide a plan up to a certain degree of relaxation to a semantically similar task whenever the goal is not achievable as it is, and a straightforward executable plan in the cases where the goal is immediately feasible. This mimic the capability of humans to change expected outcomes on-the-go depending on the context they live in.</h5>
-    </div>
 
-  <div style = "margin-top: 3%" class="columns is-centered has-text-centered">
-    <div class="column is-four-fifths">
-      <h2 class="title is-3">Abstract</h2>
-      <div class="column has-text-justified">
-        <p>
-          Classical planning in AI and Robotics addresses complex tasks by shifting from imperative to declarative approaches (e.g., PDDL). 
-          However, these methods often fail in real scenarios due to limited robot perception and the need to ground perceptions to planning predicates. This often results in heavily hard-coded behaviors that struggle to adapt, even with scenarios where goals can be achieved through relaxed planning. Meanwhile, Large Language Models (LLMs) lead to planning systems that leverage commonsense reasoning but often at the cost of generating unfeasible and/or unsafe plans. 
-          To address these limitations, we present an approach integrating classical planning with LLMs, leveraging their ability to extract commonsense knowledge and ground actions. We propose a hierarchical formulation that enables robots to make unfeasible tasks tractable by defining functionally equivalent goals through gradual relaxation. This mechanism supports partial achievement of the intended objective, suited to the agent's specific context.
-          Our method demonstrates its ability to adapt and execute tasks effectively within environments modeled using 3D Scene Graphs through comprehensive quantitative and qualitative evaluations.
-          We also show how this method succeeds in complex scenarios where other benchmark methods are more likely to fail.
-          Code, dataset, and additional material will be made available to the community.
-        </p>
+  <section class="section" id="summary-video">
+    <div class="container is-max-desktop has-text-centered">
+      <h2 class="title is-3">🎥 Summary Video</h2>
+      <div class="video-container" style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden;">
+        <iframe 
+          src="assets/output_video.mp4" 
+          frameborder="0" 
+          allowfullscreen 
+          style="position: absolute; top: 0; left: 0; width: 75%; height: 75%; margin-left: 15%;">
+        </iframe>
       </div>
+    </div>
+  </section>
 
+  <section style="margin-top: -8%;" class="section">
+    <div class="container is-max-desktop">
+      <div class="columns is-vcentered">
+        <div style="margin-right: 5%;" class="column is-half">
+          <img src="assets/Intro_vertical_sem.png" alt="Architecture" style="width:80%;">
+        </div>
+        <div class="column is-half">
+          <div class="text-image-container title is-3">
+            
+                <p>🌟 Motivations</p>
+            </div>
+
+            <div class="text">
+              <li>Planning in real world is made difficult by the need to ground the robot's 
+                perception of the environment to planning predicates.</li>
+                <li>The strictness of classical planning causes failures even when the task is still 
+                  achievable (up to a certain degree).</li>
+                </li>
+                  <li>LLM partially overcomes this issue thanks to commonsense reasoning, but often
+                  lead to unsafe or incorrect plans.
+                  </li>
+            </div>
+        <div style = "margin-top: 10%" class="text-image-container title is-3">
+
+              <p>📝 Contributions</p>
+          </div>
+
+          <div class="text">
+            <li>
+              We propose a framework that effeciently combines LLMs commonsense reasoning 
+              with classical planning approaches.
+            </li>
+            <li>
+              We define a bi-dimensional feasibility formalism that iteratively adapts 
+              tasks to the given <b>context</b>.
+            </li>
+            <li>
+              We propose an architecture that outperforms the SOTA for task planning in environment
+              represented by 3D Scene Graph.
+            </li>
+            <li>
+              We releas a publicy available <a href="dataset">dataset</a> for planning in everyday scenarios.
+            </li>
+          </div>
+          </div>
+        </div>
 
     </div>
-
-  </div>
-
-
-
-  <div style = "margin-top: 3%" class="columns is-centered has-text-centered">
-    <div class="column is-four-fifths">
-      <h2 class="title is-3">Approach</h2>
-      <div class="column has-text-justified">
-        <p>
-
-      The main contributions of this work are as follows:
-      <li>A hierarchical formulation that leverages contextual information to divide tasks into sub-components. This enables robots to reason effectively about their environment, represent problems along two axes of feasibility and functionality, and create grounded, executable plans that outperform the current state of the art (SOTA) in handling complex tasks.
-      </li><li> A bidirectional feasibility formalism to iteratively adapt tasks to be feasible within the given context. We relax the functional requirements and goal achievements to ensure practical task execution while maintaining alignment with high-level objectives.
-      </li><li> We release a novel framework that integrates LLMs for reasoning and planning in an open-vocabulary setting. By incorporating contextual understanding, the framework supports robust action grounding and flexible planning across diverse and dynamic environments.
-      </li><li>We publish a dataset containing everyday scenarios described through 3DSceneGraph [Armeni et al.] representations within the Gibson Environment. Our dataset includes everyday tasks specifically adapted to the robot environment, with varied difficulty levels. Ground truth data (PDDL domain, PDDL problem, and plan) for the scenarios are also generated using our architecture.
-      </li>
-        </p>
-      </div>
-
     </div>
-  </div>
 
 
 
   </section>
   
+  <div style = "margin-top: 3%" class="columns is-centered has-text-centered">
+    <div class="column is-four-fifths">
+      <h2 class="title is-3">Methodology</h2>
+      <img style="margin-bottom: 6%;width:70%;" src="assets/methodology_diagram.png" alt="Methodology" >
+      <div   class="text" style="text-align: justify;width: 70%; margin-left: 15%;"> 
+        Our formalism is mainly represented by two operators, the <b>Γ<sub>shift</sub></b>
+      and <b>Δ<sub>rel</sub></b>. <b>Γ<sub>shift</sub></b> represents the situational shifting, namely the operator that adapts the
+      agent's understanding of the operating environment to the core and the planning goal. <b>Δ<sub>rel</sub></b> represents
+      the complexity relaxation operators that is able to produce a more general or comprehensive formulation
+      of the goal. Suppose we have an agent which is able to explore the environment
+      and map every object he found to the corresponding location, effectively creating a <b>3D Scene Graph</b> of
+      the environment. The 3D Scene Graph and the natural language description of the task are given into the architecture as our input.
+      The <b>PDDL</b> problem file is generated by the LLM, while the domain file is either given or generated to. The plan obtained at
+      the current time step is used to attempt grounding the scene. If this step fails, the relaxation mechanism
+      takes place and new PDDL files are generated for the next iteration. In this way, the architecture is
+      able to find the optimal subset of objects needed to achieve the task. Thanks to this bidimensional mechanism,
+      the architecture is able to gradually relax the problem until the least relaxed solution is found.
+      Effectively, what we found is the minimal traverse cost path inside our relaxation graph.
+      </div>
+
+    </div>
+  </div>
+
+
+
   <section class="section" id="BibTeX">
     <div class="container is-max-desktop content">
       <h2 class="title">BibTeX</h2>
