@@ -56,14 +56,16 @@ bash third-party/VAL/scripts/linux/build_linux64.sh build Release
 cd third-party/VAL/build/linux64/Release
 make
 ```
+# Generate dataset
+1. Download the original data from the original 3DSG [repo](https://github.com/StanfordVL/3DSceneGraph)
 
-
-# Run
-1. Make sure the virtual environment is activated, then run 
+2. Make sure the virtual environment is activated, then run 
 ```
 cd dataset/
 python3 dataset_creation.py
 ```
+
+# Run
 
 2. Make sure the virtual environment is activated, then export the following environment variables
 ```
