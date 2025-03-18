@@ -3,8 +3,8 @@
 <img src="assets/cm.png" width=40%>
 <h2>Relaxing Goals with LLMs for Feasible 3D Scene Planning</h2>
 
-<a href="https://scholar.google.com/citations?user=XLcFkmUAAAAJ&hl=it&oi=ao">Emanuele Musumeci</a><sup><span>1,*</span></sup>,
-<a href="https://scholar.google.com/citations?user=sk3SpmUAAAAJ&hl=it&oi=ao">Michele Brienza</a><sup><span>1,*</span></sup>,
+<a href="https://scholar.google.com/citations?user=XLcFkmUAAAAJ&hl=it&oi=ao">Emanuele Musumeci</a><sup><span>1,#</span></sup>,
+<a href="https://scholar.google.com/citations?user=sk3SpmUAAAAJ&hl=it&oi=ao">Michele Brienza</a><sup><span>1,#</span></sup>,
 <a href="https://scholar.google.com/citations?user=Y8LuLfoAAAAJ&hl=it&oi=ao">Vincenzo Suriani</a><sup><span>2</span></sup>,
 <a href="https://www.linkedin.com/in/fra-arg/">Francesco Argenziano</a><sup><span>1</span></sup>,
 <a href="https://scholar.google.com/citations?user=xZwripcAAAAJ&hl=it&oi=ao">Daniele Nardi</a><sup><span>1</span></sup>,
@@ -14,7 +14,7 @@
 <sup>1</sup> Department of Computer, Control and Management Engineering, Sapienza University of Rome, Rome, Italy, <br>
 <sup>2</sup> School of Engineering, University of Basilicata, Potenza, Italy, <br>
 <sup>3</sup> International University of Rome UNINT, Rome, Italy <br>
-<sup>*</sup> First Co-Authors
+<sup>#</sup> First Co-Authors
 <div>
 
 [![arxiv paper](https://img.shields.io/badge/Project-Website-blue)](https://lab-rococo-sapienza.github.io/context-matters/)
