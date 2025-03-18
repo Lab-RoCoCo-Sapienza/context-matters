@@ -57,7 +57,7 @@ cd third-party/VAL/build/linux64/Release
 make
 ```
 # Generate dataset
-1. Download the original data from the original 3DSG [repo](https://github.com/StanfordVL/3DSceneGraph)
+1. Download the original data from the original [3DSG repo](https://github.com/StanfordVL/3DSceneGraph)
 
 2. Make sure the virtual environment is activated, then run 
 ```
