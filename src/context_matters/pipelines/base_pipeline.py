@@ -3,7 +3,8 @@ import json
 from typing import Dict, List, Optional
 from abc import ABC, abstractmethod
 
-from utils import copy_file
+from context_matters.utils import copy_file
+
 class BasePipeline(ABC):
     def __init__(self, **kwargs):
         self.base_dir: str  = kwargs["base_dir"]

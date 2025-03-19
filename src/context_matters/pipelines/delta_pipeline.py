@@ -4,17 +4,17 @@ import traceback
 import json
 
 from .base_pipeline import BasePipeline
-from utils import (
+
+from context_matters.utils import (
     save_file, save_statistics,
     save_graph
 )
+from context_matters.logger_cfg import logger
+from context_matters.planner import plan_with_output
+from context_matters.pddl_verification import verify_groundability_in_scene_graph, convert_JSON_to_locations_dictionary, VAL_validate, VAL_parse, VAL_ground, translate_plan
+from context_matters.delta_prompts import generate_pddl_domain, prune_scene_graph, generate_pddl_problem, decompose_pddl_goal
 
-from logger_cfg import logging
-from planner import plan_with_output
 from pddlgym.core import PDDLEnv
-from pddl_verification import verify_groundability_in_scene_graph, convert_JSON_to_locations_dictionary, VAL_validate, VAL_parse, VAL_ground, translate_plan
-
-from delta_prompts import generate_pddl_domain, prune_scene_graph, generate_pddl_problem, decompose_pddl_goal
 
 class DeltaPipeline(BasePipeline):
     
@@ -81,13 +81,13 @@ class DeltaPipeline(BasePipeline):
                     ])
                     
             if planning_successful and grounding_successful:
-                logging.info("DELTA pipelines successful")
-                logging.debug(planning_successful)
-                logging.debug(grounding_successful)
+                logger.info("DELTA pipelines successful")
+                logger.debug(planning_successful)
+                logger.debug(grounding_successful)
             else:
-                logging.info("DELTA pipelines completed with issues")
-                logging.debug(planning_successful)
-                logging.debug(grounding_successful)
+                logger.info("DELTA pipelines completed with issues")
+                logger.debug(planning_successful)
+                logger.debug(grounding_successful)
                 
         except Exception as e:
             traceback.print_exc()
@@ -128,7 +128,7 @@ class DeltaPipeline(BasePipeline):
                 "Provide the domain or the domain description"
             )
             
-            logging.info("Generating PDDL domain")
+            logger.info("Generating PDDL domain")
             domain_pddl = generate_pddl_domain(goal_file_path, domain_description,
                                                 logs_dir=logs_dir, model=self.model)
             domain_file_path = os.path.join(results_dir, "domain", "domain.pddl")
@@ -139,7 +139,7 @@ class DeltaPipeline(BasePipeline):
                 f.write(domain_pddl)
                 
         self.current_phase = "DOMAIN VALIDATION"
-        logging.info("Validating the domain")
+        logger.info("Validating the domain")
         val_parse_success, val_parse_log = VAL_validate(domain_file_path)
         save_statistics(
             dir=results_dir,
@@ -150,9 +150,9 @@ class DeltaPipeline(BasePipeline):
         
         if not val_parse_success:
             return domain_file_path, None, None, None, False, False, None, "DOMAIN_GENERATION", val_parse_log
-        logging.info("Domain validation successful")
+        logger.info("Domain validation successful")
         
-        logging.info("Pruning scene graph")
+        logger.info("Pruning scene graph")
         self.current_phase = "PRUNING_SCENE_GRAPH"
         pruned_sg = prune_scene_graph(scene_graph_file_path, goal_file_path, initial_robot_location, 
                                         logs_dir=logs_dir, model=self.model)
@@ -165,7 +165,7 @@ class DeltaPipeline(BasePipeline):
         pruned_sg_path_npz = os.path.join(results_dir, "pruned_sg.npz")
         save_graph(pruned_sg, pruned_sg_path_npz)
         
-        logging.info("Generating PDDL problem")
+        logger.info("Generating PDDL problem")
         self.current_phase = "PROBLEM GENERATION"
         problem_pddl = generate_pddl_problem(pruned_sg_path_npz, goal_file_path, domain_file_path,
                                             initial_robot_location, logs_dir=logs_dir, model=self.model)
@@ -175,7 +175,7 @@ class DeltaPipeline(BasePipeline):
         with open(problem_pddl_path, "w") as f:
             f.write(problem_pddl)
             
-        logging.info("Validating the problem")
+        logger.info("Validating the problem")
         val_parse_success, val_parse_log = VAL_validate(domain_file_path, problem_pddl_path)
         
         save_statistics(
@@ -187,14 +187,14 @@ class DeltaPipeline(BasePipeline):
         
         if not val_parse_success:
             return domain_file_path, pruned_sg, problem_pddl_path, None, False, False, None, "PROBLEM_GENERATION", val_parse_log
-        logging.info("Problem validation successful")
+        logger.info("Problem validation successful")
         
-        logging.info("Generating PDDL sub-goals")
+        logger.info("Generating PDDL sub-goals")
         self.current_phase = "SUBGOAL_GENERATION"
         sub_goals_pddl = decompose_pddl_goal(problem_pddl_path, domain_file_path, initial_robot_location, 
                                             logs_dir=logs_dir, model=self.model)
         
-        logging.info("Autoregressive planning and grounding")
+        logger.info("Autoregressive planning and grounding")
         self.current_phase="PLANNING"
         
         old_pddl_env = None
@@ -225,8 +225,8 @@ class DeltaPipeline(BasePipeline):
 
             # If this is the first iteration (old_pddl_env is None), use the PDDLEnv of the main (non-decomposed problem) to get the initial state of the first subgoal
             if old_pddl_env is None:
-                logging.debug(domain_file_path)
-                logging.debug(results_dir)
+                logger.debug(domain_file_path)
+                logger.debug(results_dir)
                 old_pddl_env = PDDLEnv(domain_file_path, results_dir, operators_as_actions=True)
                 old_pddl_env.reset()
 
@@ -287,19 +287,19 @@ class DeltaPipeline(BasePipeline):
                 # Translate the plan into a format parsable by VAL
                 translate_plan(output_plan_file_path, translated_plan_path)
 
-                logging.info("Validating the plan")
+                logger.info("Validating the plan")
                 self.current_phase = f"SUBGOAL_{i+1}:VAL:VALIDATION"
                 
                 # Use VAL to validate the plan
                 val_succesful, val_log = VAL_validate(domain_file_path, sub_goal_file, translated_plan_path)
-                logging.info(f"Result: {val_succesful}")
-                logging.debug(val_log)
+                logger.info(f"Result: {val_succesful}")
+                logger.debug(val_log)
 
-                logging.info("Validating grounding")
+                logger.info("Validating grounding")
                 # Use VAL to ground the plan
                 val_ground_succesful, val_ground_log = VAL_ground(domain_file_path, sub_goal_file)
-                logging.info(f"Result: {val_ground_succesful}")
-                logging.debug(val_ground_log)
+                logger.info(f"Result: {val_ground_succesful}")
+                logger.debug(val_ground_log)
 
                 grounding_succesful = val_succesful and val_ground_succesful
 
@@ -320,7 +320,7 @@ class DeltaPipeline(BasePipeline):
                 # If this experiment requires it, try grounding the plan in the real scene graph
                 if grounding_succesful and self.ground_in_sg:
                     self.current_phase = f"SUBGOAL_{i+1}:SCENE_GRAPH:GROUNDING"
-                    logging.info("Grounding in scene graph")
+                    logger.info("Grounding in scene graph")
 
                     # Convert the scene graph into a format readable by the grounder
                     extracted_locations_dictionary = convert_JSON_to_locations_dictionary(pruned_sg)
@@ -343,8 +343,8 @@ class DeltaPipeline(BasePipeline):
                         locations_dictionary = extracted_locations_dictionary
                     )
                     
-                    logging.info(f"Result: {grounding_success_percentage}")
-                    logging.debug(grounding_error_log)
+                    logger.info(f"Result: {grounding_success_percentage}")
+                    logger.debug(grounding_error_log)
 
                     grounding_succesful = grounding_success_percentage == 1
 
@@ -381,7 +381,7 @@ class DeltaPipeline(BasePipeline):
                     
             plans.append(plan)
             new_pddl_env = old_pddl_env
-            logging.info(f"Sub-goal {i+1} completed successfully")
+            logger.info(f"Sub-goal {i+1} completed successfully")
             
         return domain_file_path, pruned_sg, problem_pddl_path, sub_goals_file_paths, planning_succesful, grounding_succesful, plans, "", ""
             

@@ -1,7 +1,7 @@
-from agent import *
-from utils import *
+from .agent import *
+from .utils import *
 
-from pddl_generation import _save_prompt_response
+from .pddl_generation import _save_prompt_response
 
     
 def get_graph_and_task(problem_dir):

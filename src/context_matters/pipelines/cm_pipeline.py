@@ -4,17 +4,17 @@ import traceback
 from pathlib import Path
 
 from .base_pipeline import BasePipeline
-from utils import (
+
+from context_matters.utils import (
     save_file, save_statistics,
     read_graph_from_path,
     get_verbose_scene_graph,
 )
-
-from logger_cfg import logging
-from planner import plan_with_output
-from pddl_generation import generate_domain, generate_problem, refine_problem, determine_problem_possibility
-from pddl_verification import translate_plan, VAL_validate, VAL_ground, verify_groundability_in_scene_graph
-from goal_relaxation import relax_goal, dict_replaceable_objects
+from context_matters.logger_cfg import logger
+from context_matters.planner import plan_with_output
+from context_matters.pddl_generation import generate_domain, generate_problem, refine_problem, determine_problem_possibility
+from context_matters.pddl_verification import translate_plan, VAL_validate, VAL_ground, verify_groundability_in_scene_graph
+from context_matters.goal_relaxation import relax_goal, dict_replaceable_objects
 
 class ContextMattersPipeline(BasePipeline):
 
@@ -171,7 +171,7 @@ class ContextMattersPipeline(BasePipeline):
             # Reset VAL-related flags for this outer iteration
             VAL_grounding_successful = False
             
-            logging.info(f"------------ Workflow iteration {iteration+1}/{self.workflow_iterations} ------------")
+            logger.info(f"------------ Workflow iteration {iteration+1}/{self.workflow_iterations} ------------")
             
             iteration_dir = os.path.join(results_dir, f"iteration_{iteration}")
             os.makedirs(iteration_dir, exist_ok=True)
@@ -188,7 +188,7 @@ class ContextMattersPipeline(BasePipeline):
             os.makedirs(logs_dir, exist_ok=True)
             
             if self.determine_possibility:
-                logging.info("Preventing impossible problems")
+                logger.info("Preventing impossible problems")
                 self.current_phase = "IMPOSSIBLE_PROBLEM_PREVENTION"
                 task_possible, possibility_explanation = determine_problem_possibility(
                     domain_file_path=domain_file_path,
@@ -203,19 +203,19 @@ class ContextMattersPipeline(BasePipeline):
                     file.write(possibility_explanation)
                         
                 if task_possible.lower() == "false":
-                    logging.info("Task is impossible, stopping current workflow")
-                    logging.debug(possibility_explanation)
+                    logger.info("Task is impossible, stopping current workflow")
+                    logger.debug(possibility_explanation)
                     if self.prevent_impossibility:
                         return (problem_file_path, None, current_goal,
                                 False, False, False, possibility_explanation,
                                 iteration, refinements_per_iteration, goals,
                                 self.current_phase, "")
                 else:
-                    logging.info("Task is possible, continuing workflow")
-                    logging.debug(possibility_explanation)
+                    logger.info("Task is possible, continuing workflow")
+                    logger.debug(possibility_explanation)
                         
             if domain_description:
-                logging.info("Generating domain")
+                logger.info("Generating domain")
                 domain_pddl = generate_domain(  #TODO ASK EMA
                     domain_file_path=domain_file_path,
                     goal_file_path=goal_file_path,
@@ -235,7 +235,7 @@ class ContextMattersPipeline(BasePipeline):
                     VAL_validation_log=VAL_validation_log
                 )
                 
-            logging.info("Generating problem")
+            logger.info("Generating problem")
             problem = generate_problem(  #TODO ASK EMA
                 domain_file_path=domain_file_path,
                 initial_robot_location=initial_robot_location,
@@ -287,10 +287,10 @@ class ContextMattersPipeline(BasePipeline):
                     
                 while PDDL_loop_iteration < self.pddl_gen_iterations and \
                     (not planning_successful or not VAL_grounding_successful):
-                    logging.info(f"------------ Refinement iteration {PDDL_loop_iteration+1}/{self.pddl_gen_iterations} ------------")
-                    logging.debug(f"Problem directory: {problem_dir}")
+                    logger.info(f"------------ Refinement iteration {PDDL_loop_iteration+1}/{self.pddl_gen_iterations} ------------")
+                    logger.debug(f"Problem directory: {problem_dir}")
                         
-                    logging.info("Refining problem")
+                    logger.info("Refining problem")
                     new_problem = refine_problem(
                         planner_output_file_path=planner_output_file_path,
                         domain_file_path=domain_file_path,
@@ -315,7 +315,7 @@ class ContextMattersPipeline(BasePipeline):
                         
                     new_problem_file_path = os.path.join(new_problem_dir, "problem.pddl")
                         
-                    logging.debug(f"Saving new problem to {new_problem_file_path}")
+                    logger.debug(f"Saving new problem to {new_problem_file_path}")
                     with open(new_problem_file_path, "w") as file:
                         file.write(new_problem)
                             
@@ -359,14 +359,14 @@ class ContextMattersPipeline(BasePipeline):
             refinements_per_iteration.append(PDDL_loop_iteration)
                 
             if planning_successful and VAL_grounding_successful:
-                logging.info("Planning and grounding successful")
+                logger.info("Planning and grounding successful")
             else:
-                logging.info("Out of PDDL refinements")
+                logger.info("Out of PDDL refinements")
                     
             # Grounding in the 3D Scene Graph
             if planning_successful and plan and VAL_grounding_successful:
                 if self.ground_in_sg:
-                    logging.info("Grounding in the 3DSG")
+                    logger.info("Grounding in the 3DSG")
                     grounding_success_percentage, scene_graph_grounding_log = verify_groundability_in_scene_graph(
                         plan=plan,
                         graph=extracted_sg,
@@ -378,8 +378,8 @@ class ContextMattersPipeline(BasePipeline):
                         initial_robot_location=initial_robot_location,
                     )
                         
-                    logging.info(f"Grounding result: {grounding_success_percentage}")
-                    logging.debuf(scene_graph_grounding_log)
+                    logger.info(f"Grounding result: {grounding_success_percentage}")
+                    logger.debuf(scene_graph_grounding_log)
                         
                     grounding_successful = True if grounding_success_percentage == 1 else False
                         
@@ -393,18 +393,18 @@ class ContextMattersPipeline(BasePipeline):
                         grounding_success_percentage=grounding_success_percentage
                     )
                 else:
-                    logging.info("Skipping grounding in the 3DSG")
+                    logger.info("Skipping grounding in the 3DSG")
                     grounding_successful = True
                     scene_graph_grounding_log = None
                         
             # If we achieved 100% grounding success, we can break the loop as we correctly achieved the original goal        
             if grounding_successful:
-                logging.info("Perfect grounding success, stopping workflow")
+                logger.info("Perfect grounding success, stopping workflow")
                 scene_graph_grounding_log = None
                 break
             else:
                 # Goal relaxation
-                logging.info("Grounding not successful. Performing goal relaxation")
+                logger.info("Grounding not successful. Performing goal relaxation")
                 alternatives, current_goal = dict_replaceable_objects(extracted_sg_str, current_goal,
                                                                         iteration, logs_dir)  # TODO alternatives?
                 # Generate new goal
@@ -428,16 +428,16 @@ class ContextMattersPipeline(BasePipeline):
         Otherwise, validates only the domain.
         """
         if problem_file_path:
-            logging.info("Checking problem and domain with VAL")
+            logger.info("Checking problem and domain with VAL")
             VAL_successful, VAL_validation_log = VAL_validate(domain_file_path, problem_file_path)
         else:
-            logging.info("Checking domain with VAL")
+            logger.info("Checking domain with VAL")
             VAL_successful, VAL_validation_log = VAL_validate(domain_file_path)
         if not VAL_successful:
-            logging.info("VAL validation check failed")
-            logging.debug(VAL_validation_log)
+            logger.info("VAL validation check failed")
+            logger.debug(VAL_validation_log)
         else:
-            logging.info("VAL validation check passed")
+            logger.info("VAL validation check passed")
         return VAL_successful, VAL_validation_log
 
 
@@ -450,20 +450,20 @@ class ContextMattersPipeline(BasePipeline):
         # Translate the plan into a format parsable by VAL
         translated_plan_path = os.path.join(problem_dir, f"translated_plan_{translation_suffix}.txt") # TODO DISCUSS THIS
         translate_plan(plan_file_path, translated_plan_path)
-        logging.info("Checking planning with VAL")
+        logger.info("Checking planning with VAL")
         VAL_successful, VAL_validation_log = VAL_validate(domain_file_path, problem_file_path, translated_plan_path)
         if VAL_successful:
-            logging.info("VAL validation check passed")
-            logging.info("Attempting to ground the plan")
+            logger.info("VAL validation check passed")
+            logger.info("Attempting to ground the plan")
             VAL_ground_successful, VAL_grounding_log = VAL_ground(domain_file_path, problem_file_path)
             if VAL_ground_successful:
-                logging.info("Plan is grounded")
+                logger.info("Plan is grounded")
             else:
-                logging.info("Plan is not grounded")
-                logging.debug(VAL_grounding_log)
+                logger.info("Plan is not grounded")
+                logger.debug(VAL_grounding_log)
         else:
-            logging.info("VAL validation check failed")
-            logging.debug(VAL_validation_log)
+            logger.info("VAL validation check failed")
+            logger.debug(VAL_validation_log)
             VAL_ground_successful = False
             VAL_grounding_log = None
         return VAL_successful, VAL_validation_log, VAL_ground_successful, VAL_grounding_log

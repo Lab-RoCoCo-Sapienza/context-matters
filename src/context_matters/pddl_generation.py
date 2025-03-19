@@ -2,8 +2,7 @@ import json
 import os
 from pathlib import Path
 
-from utils import print_blue
-from agent import llm_call
+from .agent import llm_call
 
 ##########
 # DOMAIN #
@@ -16,8 +15,6 @@ def generate_domain(
     logs_dir=None, 
     model="gpt-4o"
 ):
-    print_blue("Generating PDDL domain...")
-
     prompt = """
     Role: You are an excellent PDDL domain generator. Given a description of the planning domain, given as a description of the domain actions and one of the domain objects, you must generate a PDDL domain file.
     Make sure the domain file respects the provided description for each action.

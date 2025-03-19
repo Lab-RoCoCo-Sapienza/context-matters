@@ -1,5 +1,3 @@
-import os
-
 from .base_pipeline import BasePipeline
 from .delta_pipeline import DeltaPipeline
 from .cm_pipeline import ContextMattersPipeline

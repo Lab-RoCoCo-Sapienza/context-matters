@@ -1,10 +1,9 @@
-import re
 import json
 import os
 import numpy as np
 import traceback
 
-from typing import Dict, Set, Optional
+from typing import Dict, Set
 from collections import defaultdict
 from pathlib import Path
 
