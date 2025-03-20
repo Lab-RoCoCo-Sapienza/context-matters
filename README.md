@@ -45,7 +45,7 @@ pip install -r requirements.txt
 3. Install the pddlgym_planners submodule
 ```
 cd third-party/pddlgym_planners/
-pip install -e
+pip install -e .
 ```
    
 4. Install ollama

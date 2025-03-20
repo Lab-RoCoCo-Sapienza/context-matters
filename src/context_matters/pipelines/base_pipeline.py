@@ -3,7 +3,7 @@ import json
 from typing import Dict, List, Optional
 from abc import ABC, abstractmethod
 
-from context_matters.utils import copy_file
+from src.context_matters.utils import copy_file
 
 class BasePipeline(ABC):
     def __init__(self, **kwargs):

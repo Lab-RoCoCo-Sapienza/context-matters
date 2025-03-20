@@ -6,8 +6,8 @@ import re
 from pddlgym.core import InvalidAction
 
 
-from planner import run_planner_FD, execute_action, initialize_pddl_environment
-from utils import read_graph_from_path, get_verbose_scene_graph
+from .planner import run_planner_FD, execute_action, initialize_pddl_environment
+from .utils import read_graph_from_path, get_verbose_scene_graph
 
 def convert_JSON_to_verbose_SG(scene_graph):
     locations = {}

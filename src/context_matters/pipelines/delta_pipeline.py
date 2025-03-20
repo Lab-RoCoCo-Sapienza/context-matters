@@ -5,14 +5,14 @@ import json
 
 from .base_pipeline import BasePipeline
 
-from context_matters.utils import (
+from src.context_matters.utils import (
     save_file, save_statistics,
     save_graph
 )
-from context_matters.logger_cfg import logger
-from context_matters.planner import plan_with_output
-from context_matters.pddl_verification import verify_groundability_in_scene_graph, convert_JSON_to_locations_dictionary, VAL_validate, VAL_parse, VAL_ground, translate_plan
-from context_matters.delta_prompts import generate_pddl_domain, prune_scene_graph, generate_pddl_problem, decompose_pddl_goal
+from src.context_matters.logger_cfg import logger
+from src.context_matters.planner import plan_with_output
+from src.context_matters.pddl_verification import verify_groundability_in_scene_graph, convert_JSON_to_locations_dictionary, VAL_validate, VAL_parse, VAL_ground, translate_plan
+from src.context_matters.delta_prompts import generate_pddl_domain, prune_scene_graph, generate_pddl_problem, decompose_pddl_goal
 
 from pddlgym.core import PDDLEnv
 

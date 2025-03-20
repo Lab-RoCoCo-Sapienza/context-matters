@@ -3,7 +3,7 @@ import base64, cv2, os, json, requests
 
 base_url = "http://127.0.0.1:11434"
 chat_history = []
-api_key = open("key.txt", "r").read().strip()
+api_key = os.getenv("OPENAI_API_KEY")
 client = OpenAI(api_key=api_key)
 
 def local_llm_call(prompt, question):

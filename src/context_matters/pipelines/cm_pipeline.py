@@ -5,16 +5,16 @@ from pathlib import Path
 
 from .base_pipeline import BasePipeline
 
-from context_matters.utils import (
+from src.context_matters.utils import (
     save_file, save_statistics,
     read_graph_from_path,
     get_verbose_scene_graph,
 )
-from context_matters.logger_cfg import logger
-from context_matters.planner import plan_with_output
-from context_matters.pddl_generation import generate_domain, generate_problem, refine_problem, determine_problem_possibility
-from context_matters.pddl_verification import translate_plan, VAL_validate, VAL_ground, verify_groundability_in_scene_graph
-from context_matters.goal_relaxation import relax_goal, dict_replaceable_objects
+from src.context_matters.logger_cfg import logger
+from src.context_matters.planner import plan_with_output
+from src.context_matters.pddl_generation import generate_domain, generate_problem, refine_problem, determine_problem_possibility
+from src.context_matters.pddl_verification import translate_plan, VAL_validate, VAL_ground, verify_groundability_in_scene_graph
+from src.context_matters.goal_relaxation import relax_goal, dict_replaceable_objects
 
 class ContextMattersPipeline(BasePipeline):
 
@@ -73,7 +73,7 @@ class ContextMattersPipeline(BasePipeline):
             # Format refinements and goal relaxations
             refinements_per_iteration_str = ";".join(map(str, refinements_per_iteration))
             goal_relaxations_str = "; ".join(
-                f"'{relax.strip().replace('\n', ' ').replace('\r', '')}'"
+                "'{}'".format(relax.strip().replace('\n', ' ').replace('\r', ''))
                 for relax in goal_relaxations
             )
 
