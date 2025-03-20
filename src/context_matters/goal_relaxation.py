@@ -1,3 +1,5 @@
+import re
+
 from .agent import *
 from .utils import *
 
@@ -51,15 +53,3 @@ def relax_goal(objects, goal, workflow_iteration=None, logs_dir=None):
 
     new_goal = answer.split("<NEW_GOAL>")[1]
     return new_goal
-
-
-if __name__ == "__main__":
-    goal_relaxation = GoalRelaxation()
-    path_problem = "/DATA/context-matters/dataset/dining_setup/Allensville/problem_4"
-
-    graph, task = get_graph_and_task(path_problem)
-    alternatives, new_goal = dict_replaceable_objects(graph, task)
-    print(alternatives)
-    print(new_goal)
-
-    print(relax_goal(get_verbose_scene_graph(graph), new_goal))

@@ -2,8 +2,8 @@ import argparse
 from omegaconf import OmegaConf
 import os
 
-from context_matters.pipelines import get_pipeline
-from context_matters.logger_cfg import logger
+from src.context_matters.pipelines import get_pipeline
+from src.context_matters.logger_cfg import logger
 
 if __name__ == "__main__":
     
@@ -71,7 +71,6 @@ if __name__ == "__main__":
     for method in cfg_methods:
         method = get_pipeline(method, **kwargs)
         methods.append(method)
-        method.run()
         
     for method in methods:
         logger.info(f"-------------------Running the {method.name} Pipeline -------------------\n")
