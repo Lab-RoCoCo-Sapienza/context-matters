@@ -16,7 +16,7 @@ def run_planner_FD(domain_file_path, problem_dir, env=None, search_flag='--searc
             env = PDDLEnv(domain_file_path, problem_dir, operators_as_actions=True)
         except Exception as e:
             print("Exception in PDDLEnv: " + str(e))
-            traceback.print_exc()
+            #traceback.print_exc()
             return None, str(e), None, None
 
     # Use only first problem in directory
@@ -28,7 +28,7 @@ def run_planner_FD(domain_file_path, problem_dir, env=None, search_flag='--searc
         obs, debug_info = env.reset()
     except Exception as e:
         print("Exception in PDDLEnv reset: " + str(e))
-        traceback.print_exc()
+        #traceback.print_exc()
         return None, str(e), None, None
         
     #print(env.get_state())
@@ -44,7 +44,7 @@ def run_planner_FD(domain_file_path, problem_dir, env=None, search_flag='--searc
         plan = planner(env.domain, obs, timeout=timeout)
     except Exception as e:
         print("Exception in FD planner: " + str(e))
-        traceback.print_exc()
+        #traceback.print_exc()
         return None, None, str(e), stats
 
     return plan, None, None, stats

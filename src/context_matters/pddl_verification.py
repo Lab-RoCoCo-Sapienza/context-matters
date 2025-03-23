@@ -413,7 +413,7 @@ def translate_plan(input_file, output_file=None):
     return translate_plan
 
 def VAL_validate(domain_file_path, problem_file_path=None, plan_path=None):
-    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     validate_path = os.path.join(BASE_DIR, "third-party", "VAL", "build", "linux64", "Release", "bin", "Validate")
     command = [validate_path, "-v", domain_file_path]
     if problem_file_path:
@@ -440,7 +440,7 @@ def VAL_validate(domain_file_path, problem_file_path=None, plan_path=None):
 
 
 def VAL_ground(domain_file_path, problem_file_path):
-    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     validate_path = os.path.join(BASE_DIR, "third-party", "VAL", "build", "linux64", "Release", "bin", "Instantiate")
     command = [validate_path, domain_file_path, problem_file_path]
     

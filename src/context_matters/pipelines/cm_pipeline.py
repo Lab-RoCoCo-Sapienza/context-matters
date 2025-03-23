@@ -23,8 +23,9 @@ class ContextMattersPipeline(BasePipeline):
         self.determine_possibility: bool = kwargs["determine_possibility"]
         self.prevent_impossibility: bool = kwargs["prevent_impossibility"]
         self.workflow_iterations: int = kwargs["workflow_iterations"]
-        self.pddl_gen_iterations: int = kwargs["pddl_generation_iterations"]
+        self.pddl_gen_iterations: int = kwargs["pddl_gen_iterations"]
         self._name: str = "ContextMatters"
+        self.experiment_name = super()._construct_experiment_name()
 
     def _initialize_csv(self, csv_filepath):
         # Initialize CSV with headers
@@ -88,7 +89,7 @@ class ContextMattersPipeline(BasePipeline):
 
             # Save the possibility result if enabled
             if self.determine_possibility:
-                with open(os.path.join(self.results_dir, "possibility.csv"), mode="a", newline='') as f:
+                with open(os.path.join(self.results_dir, self.experiment_name, self.timestamp, "possibility.csv"), mode="a", newline='') as f:
                     writer = csv.writer(f, delimiter='|')
                     writer.writerow([
                         task_name, scene_name, problem_id, task_possible,
@@ -108,7 +109,7 @@ class ContextMattersPipeline(BasePipeline):
 
             # Log the possibility failure if enabled
             if self.determine_possibility:
-                with open(os.path.join(self.results_dir, "possibility.csv"), mode="a", newline='') as f:
+                with open(os.path.join(self.results_dir, self.experiment_name, self.timestamp, "possibility.csv"), mode="a", newline='') as f:
                     writer = csv.writer(f, delimiter='|')
                     writer.writerow([task_name, scene_name, problem_id, False, f"Exception: {exception_str}"])
 
@@ -203,9 +204,10 @@ class ContextMattersPipeline(BasePipeline):
                     file.write(possibility_explanation)
                         
                 if task_possible.lower() == "false":
-                    logger.info("Task is impossible, stopping current workflow")
+                    logger.info("Task is impossible")
                     logger.debug(possibility_explanation)
                     if self.prevent_impossibility:
+                        logger.info("Stopping workflow to prevent impossible problem")
                         return (problem_file_path, None, current_goal,
                                 False, False, False, possibility_explanation,
                                 iteration, refinements_per_iteration, goals,
@@ -379,7 +381,7 @@ class ContextMattersPipeline(BasePipeline):
                     )
                         
                     logger.info(f"Grounding result: {grounding_success_percentage}")
-                    logger.debuf(scene_graph_grounding_log)
+                    logger.debug(scene_graph_grounding_log)
                         
                     grounding_successful = True if grounding_success_percentage == 1 else False
                         

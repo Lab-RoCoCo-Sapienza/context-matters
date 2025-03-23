@@ -7,7 +7,7 @@ def get_pipeline(
 ) -> BasePipeline:
     if name == "delta":
         return DeltaPipeline(**kwargs)
-    elif name == "context-matters":
+    elif name == "cm":
         return ContextMattersPipeline(**kwargs)
     else:
         raise ValueError(f"Unknown pipeline {name}")

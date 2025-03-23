@@ -21,6 +21,7 @@ class DeltaPipeline(BasePipeline):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._name: str = "DELTA"
+        self.experiment_name = super()._construct_experiment_name()
 
     def _initialize_csv(self, csv_filepath):
         # Initialize CSV with headers
@@ -43,9 +44,9 @@ class DeltaPipeline(BasePipeline):
                 results_dir=results_problem_dir,
                 domain_description=domain_description,
                 )
-            
-            (final_domain_file_path, planning_successful, grounding_successful, 
-                subplans, failure_stage, failure_reason) = results
+            (final_domain_file_path, final_pruned_scene_graph, final_problem_file_path, 
+            final_subgoals_file_paths, planning_successful, grounding_successful, 
+            subplans, failure_stage, failure_reason) = results
             
             plan_length = 0
             if planning_successful and grounding_successful:
@@ -308,7 +309,7 @@ class DeltaPipeline(BasePipeline):
                     dir=results_dir,
                     workflow_iteration=0,
                     phase=self.current_phase,
-                    plan_succesful=planning_succesful,
+                    plan_successful=planning_succesful,
                     pddlenv_error_log=pddlenv_error_log,
                     planner_error_log=planner_error_log,
                     VAL_validation_log=val_log,
@@ -352,7 +353,7 @@ class DeltaPipeline(BasePipeline):
                         dir=results_dir,
                         workflow_iteration=0,
                         phase=self.current_phase,
-                        plan_succesful=planning_succesful,
+                        plan_successful=planning_succesful,
                         pddlenv_error_log=pddlenv_error_log,
                         planner_error_log=planner_error_log,
                         VAL_validation_log=val_log,
@@ -372,7 +373,7 @@ class DeltaPipeline(BasePipeline):
                     dir=results_dir,
                     workflow_iteration=0,
                     phase=self.current_phase,
-                    plan_succesful=planning_succesful,
+                    plan_successful=planning_succesful,
                     pddlenv_error_log=pddlenv_error_log,
                     planner_error_log=planner_error_log
                 )

@@ -2,6 +2,7 @@ import os
 import json
 from typing import Dict, List, Optional
 from abc import ABC, abstractmethod
+import datetime
 
 from src.context_matters.utils import copy_file
 
@@ -41,6 +42,7 @@ class BasePipeline(ABC):
                 "Noxapater"
             ],
             "pc_assembly": ["Allensville", "Parole", "Shelbiana"],
+            "impossible_tasks": ["Allensville", "Parole", "Shelbiana"]
         }
         self.problems_per_task: Dict = {
             "dining_setup": 6,
@@ -50,9 +52,11 @@ class BasePipeline(ABC):
             "other_1": 10,
             "other_2": 9,
             "pc_assembly": 3,
+            "impossible_tasks": 6
         }
         
         self.experiment_name: str = self._construct_experiment_name()
+        self.timestamp: str = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
         self.current_phase: Optional[str] = None
     
     @property
@@ -78,6 +82,8 @@ class BasePipeline(ABC):
         task_file_path = os.path.join(self.data_dir, f"{task_name}.json")
         with open(task_file_path) as f:
             task_description = json.load(f)
+        
+        os.makedirs(os.path.join(results_dir, task_name), exist_ok=True)
 
         domain_file_path, domain_description = self._setup_domain(task_description, task_name, task_dir, results_dir)
 
@@ -92,12 +98,17 @@ class BasePipeline(ABC):
         # Set up domain files based on the pipeline configuration
         if self.generate_domain:
             return None, task_description["domain"]
+        else:
+            domain_file_path = None
+            for file in os.listdir(task_dir):
+                if file.endswith(".pddl"):
+                    domain_file_path = os.path.join(task_dir, file)
+                    break
 
-        domain_name = task_name.replace("_", "-") + ".pddl"
-        domain_file_path = os.path.join(task_dir, domain_name)
-        copy_file(domain_file_path, os.path.join(results_dir, task_name, "domain.pddl"))
+            if domain_file_path:
+                copy_file(domain_file_path, os.path.join(results_dir, task_name, "domain.pddl"))
 
-        return domain_file_path, None
+            return domain_file_path, None
 
     def _process_scene(self, task_name, scene_name, task_dir, results_dir,
                 domain_file_path, domain_description, csv_filepath):
@@ -124,7 +135,7 @@ class BasePipeline(ABC):
             )
 
     def run(self):
-        results_dir = os.path.join(self.results_dir, self.experiment_name)
+        results_dir = os.path.join(self.results_dir, self.experiment_name, self.timestamp)
         os.makedirs(results_dir, exist_ok=True)
         
         for task_name in self.splits:

@@ -15,8 +15,8 @@ def get_graph_and_task(problem_dir):
 
 
 def dict_replaceable_objects(graph, task, workflow_iteration=None, logs_dir=None):
-
-    system_prompt = open(os.path.join("prompt", "replace_objects.txt"),"r").read()
+    CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+    system_prompt = open(os.path.join(CURRENT_DIR, "prompt", "replace_objects.txt"),"r").read()
     user_prompt = "SCENE: \n" + graph + "\n\nTASK: \n" + task
 
     answer = llm_call(system_prompt, user_prompt, temperature=0.1, top_p=1)
@@ -38,7 +38,8 @@ def dict_replaceable_objects(graph, task, workflow_iteration=None, logs_dir=None
     return match, new_goal
 
 def relax_goal(objects, goal, workflow_iteration=None, logs_dir=None):
-    system_prompt = open(os.path.join("prompt", "relax_goal.txt"),"r").read()
+    CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+    system_prompt = open(os.path.join(CURRENT_DIR, "prompt", "relax_goal.txt"),"r").read()
     user_prompt = "Objects:\n" + str(objects) + "\nGoal:" + goal
     answer = llm_call(system_prompt, user_prompt, temperature=0.1, top_p=1)
 
