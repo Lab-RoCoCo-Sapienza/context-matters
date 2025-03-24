@@ -36,6 +36,13 @@ class ContextMattersPipeline(BasePipeline):
         with open(csv_filepath, mode="w", newline='') as f:
             writer = csv.writer(f, delimiter='|')
             writer.writerow(header)
+        
+
+        if self.determine_possibility:
+            possibility_header = ["Task", "Scene", "Problem", "Possible", "Explanation"]
+            with open(os.path.join(self.results_dir, self.experiment_name, self.timestamp, "possibility.csv"), mode="w", newline='') as f:
+                writer = csv.writer(f, delimiter='|')
+                writer.writerow(possibility_header)
 
     def _run_and_log_pipeline(self, task_name, scene_name, problem_id, results_problem_dir,
                             domain_file_path, domain_description, scene_graph_file_path,
@@ -199,7 +206,7 @@ class ContextMattersPipeline(BasePipeline):
                     model=self.model,
                     logs_dir=logs_dir
                 )
-
+                
                 with open(os.path.join(results_dir, "logs", "explanation.txt"), "w") as file:
                     file.write(possibility_explanation)
                         
@@ -369,6 +376,7 @@ class ContextMattersPipeline(BasePipeline):
             if planning_successful and plan and VAL_grounding_successful:
                 if self.ground_in_sg:
                     logger.info("Grounding in the 3DSG")
+                    
                     grounding_success_percentage, scene_graph_grounding_log = verify_groundability_in_scene_graph(
                         plan=plan,
                         graph=extracted_sg,
@@ -415,7 +423,7 @@ class ContextMattersPipeline(BasePipeline):
                 goals.append(current_goal)
                 # Prepare next iteration
                 iteration += 1
-            
+        
         # Return final problem and plan
         return (problem_file_path, plan_file_path, current_goal,
                 planning_successful, grounding_successful, task_possible,

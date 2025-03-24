@@ -2,8 +2,10 @@ import os
 import pandas as pd
 import json
 
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+experiments_path = os.path.join(BASE_DIR, "experiments")
 
-possible_tasks_path = "experiments/possibility.csv"
+possible_tasks_path = os.path.join(experiments_path, "possibility.csv")
 possible_tasks = pd.read_csv(possible_tasks_path, sep='|')
 print(possible_tasks)
 dict_possible_tasks = {}
@@ -35,19 +37,19 @@ def find_key(d, key):
     return found_values
 
 
-for root, dirs, files in os.walk("experiments"):
+for root, dirs, files in os.walk(experiments_path):
     for file in files:
         if file.endswith(".csv") and "possibility.csv" !=file:
             print(file)
-            print(root.split("/")[1])
-            model = root.split("/")[1]
+            print(root.split("/")[-1])
+            model = root.split("/")[-1]
             if model not in results.keys():
                 results[model] = []
             path = os.path.join(root, file)
             df = pd.read_csv(path, sep='|')
             
             for index, row in df.iterrows():
-                df.at[index, "Planning Succesful"] = str(row["Planning Succesful"]).strip().lower() == "true"
+                df.at[index, "Planning Successful"] = str(row["Planning Successful"]).strip().lower() == "true"
                 df.at[index, "Grounding Successful"] = str(row["Grounding Successful"]).strip().lower() == "true"
             for index, row in df.iterrows():
                 task = row["Task"]
@@ -56,7 +58,7 @@ for root, dirs, files in os.walk("experiments"):
                         print(model, task_dict["scene"],task, task_dict["problem"])
                         domain = file.replace(".csv", "")
                         #construct path
-                        path_to_json = f"experiments/{model}/{task}/{task_dict['scene']}/{task_dict['problem']}/statistics.json"
+                        path_to_json = os.path.join(experiments_path,model,task,task_dict['scene'],task_dict['problem'],"statistics.json")
                         if os.path.exists(path_to_json):
                             with open(path_to_json, "r") as json_file:
                                 data = json.load(json_file)
@@ -74,13 +76,13 @@ for root, dirs, files in os.walk("experiments"):
                         print(path_to_json)
                         df.loc[index, "Possible"] = task_dict["possible"]
 
-            media_planning_succesfull = df[df["Planning Succesful"] == True].shape[0] / df.shape[0] * 100
+            media_planning_succesfull = df[df["Planning Successful"] == True].shape[0] / df.shape[0] * 100
             success_score = df[df["Grounding Successful"] == True].shape[0] / df.shape[0] * 100
             if "delta" not in model:
                 mean_relaxation = df["Relaxations"].sum() / df.shape[0]
             else:
                 mean_relaxation = 0
-            df_with_plan_true = df[df["Planning Succesful"] == True]
+            df_with_plan_true = df[df["Planning Successful"] == True]
             succesfull_average_plan_length = df_with_plan_true["Plan Length"].sum() / df_with_plan_true.shape[0]
             average_plan_length = df["Plan Length"].sum() / df["Plan Length"].shape[0]
             if df_with_plan_true.shape[0] != 0:
@@ -117,6 +119,7 @@ for root, dirs, files in os.walk("experiments"):
 print(results)
 
 #TEST 
+'''
 path_test = "/home/michele/Downloads/Brave/frozen_results-20250228T144616Z-001/frozen_results/experiments/CM_gpt-4o_NOgendomain_groundsg/dining_setup.csv"
 df_test = pd.read_csv(path_test, sep='|')
 for index, row in df_test.iterrows():
@@ -173,7 +176,7 @@ test_results = {
 print("Expected results: ", expected_results)
 print("Test results: ", test_results)
 print("Test passed: ", expected_results == test_results)
-
+'''
 
 
 os.makedirs("results", exist_ok=True)
