@@ -5,6 +5,7 @@ from abc import ABC, abstractmethod
 import datetime
 
 from src.context_matters.utils import copy_file
+from src.context_matters.logger_cfg import logger
 
 class BasePipeline(ABC):
     def __init__(self, **kwargs):
@@ -99,11 +100,10 @@ class BasePipeline(ABC):
         if self.generate_domain:
             return None, task_description["domain"]
         else:
-            domain_file_path = None
-            for file in os.listdir(task_dir):
-                if file.endswith(".pddl"):
-                    domain_file_path = os.path.join(task_dir, file)
-                    break
+            domain_file_path = os.path.join(self.data_dir, task_name.replace("_","-")+"-domain.pddl")
+
+            if not os.path.exists(domain_file_path):
+                logger.warning(f"Could not find domain file at path {domain_file_path}")
 
             if domain_file_path:
                 copy_file(domain_file_path, os.path.join(results_dir, task_name, "domain.pddl"))
@@ -127,6 +127,8 @@ class BasePipeline(ABC):
             # Copy required files
             for file_name in ["task.txt", "init_loc.txt", "description.txt"]:
                 copy_file(os.path.join(problem_dir, file_name), os.path.join(results_problem_dir, file_name))
+
+            logger.info(f"------------ Task: {task_name}, Scene: {scene_name}, Problem {problem_id} ------------")
 
             self._run_and_log_pipeline(
                 task_name, scene_name, f"problem_{problem_id}", results_problem_dir,

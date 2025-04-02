@@ -93,6 +93,9 @@ class DeltaPipeline(BasePipeline):
         except Exception as e:
             traceback.print_exc()
             exception_str = str(e).strip().replace('\n', ' ').replace('\r', '').replace('\t', ' ')
+            
+            logger.warning(f"Encountered problem: {exception_str}")
+
             with open(csv_filepath, mode="a", newline='') as f:
                 writer = csv.writer(f, delimiter='|')
                 writer.writerow([task_name, scene_name, problem_id, False, False, "", "", "Exception", exception_str])

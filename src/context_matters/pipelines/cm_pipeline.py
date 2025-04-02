@@ -106,6 +106,9 @@ class ContextMattersPipeline(BasePipeline):
         except Exception as e:
             exception_str = str(e).strip().replace('\n', ' ').replace('\r', '')
 
+            logger.warning(f"Encountered problem: {exception_str}")
+
+
             # Log the exception in the main CSV file
             with open(csv_filepath, mode="a", newline='') as f:
                 writer = csv.writer(f, delimiter='|')

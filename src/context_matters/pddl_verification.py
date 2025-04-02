@@ -291,7 +291,6 @@ def verify_groundability_in_scene_graph(
     if robot_name not in locations_dictionary:
         locations_dictionary[robot_name] = initial_robot_location
 
-    print(locations_dictionary)
     
     # [Problem hallucination checks]
 
