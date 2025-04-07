@@ -4,6 +4,3 @@
 [submodule "third-party/VAL"]
 	path = third-party/VAL
 	url = https://github.com/KCL-Planning/VAL.git
-[submodule "dataset"]
-	path = dataset
-	url = https://github.com/Lab-RoCoCo-Sapienza/context-matters-dataset.git
