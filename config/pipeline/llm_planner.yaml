@@ -1,7 +1,0 @@
-_target_: src.context_matters.pipelines.llm_as_planner_pipeline.LLMAsPlannerPipeline
-
-# LLM configuration
-model_name: "gpt-4o" 
-temperature: 0.0
-top_p: 1.0
-episodes: 1 

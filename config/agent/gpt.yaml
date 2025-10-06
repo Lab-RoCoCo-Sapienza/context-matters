@@ -1,3 +1,0 @@
-_target_: src.context_matters.agents.gpt.GPTAgent
-#model: gpt-5-mini
-model: gpt-4o

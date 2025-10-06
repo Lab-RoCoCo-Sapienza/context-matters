@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<meta charset="utf-8">
+<meta name="description" content="Context Matters!">
+<meta name="keywords"
+content="Context Matters!">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Context Matters! Relaxing Goals with LLMs for Feasible 3D Scene Planning  </title>
+
+<link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro" rel="stylesheet">
+
+<link rel="stylesheet" href="./static/css/bulma.min.css">
+<link rel="stylesheet" href="./static/css/bulma-carousel.min.css">
+<link rel="stylesheet" href="./static/css/bulma-slider.min.css">
+<link rel="stylesheet" href="./static/css/fontawesome.all.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+<link rel="stylesheet" href="./static/css/index.css">
+<!-- <link rel="icon" href="./static/images/favicon.svg"> -->
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script defer src="./static/js/fontawesome.all.min.js"></script>
+<script src="./static/js/bulma-carousel.min.js"></script>
+<script src="./static/js/bulma-slider.min.js"></script>
+<script src="./static/js/index.js"></script>
+
+
+</head>
+
+<body>
+<style>
+    .containeritem {
+        display: flex;
+        flex-wrap: wrap;
+    }
+    .column {
+        flex: 33.33%;
+        padding: 10px;
+    }
+    ul {
+        list-style-type: none;
+    }
+    li {
+        margin: 5px 0;
+    }
+</style>
+<nav class="navbar" role="navigation" aria-label="main navigation">
+<div class="navbar-brand">
+    <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false">
+    <span aria-hidden="true"></span>
+    <span aria-hidden="true"></span>
+    <span aria-hidden="true"></span>
+    </a>
+</div>
+
+
+</div>
+</nav>
+
+
+<section class="hero">
+<div class="hero-body">
+    <div class="container is-max-desktop">
+    <div class="columns is-centered">
+        <div class="column has-text-centered">
+        <h1 class="title is-2 publication-title">Context Matters! Relaxing Goals with LLMs for Feasible 3D Scene Planning  </h1>
+        <h2 class="title is-6 publlication-title"><a href="http://www.iros25.org/">IROS 2025</a></h2>
+        <div class="is-size-6 publication-authors">
+            <span class="author-block">
+            <span class="author-block">
+                <a href=""><i>Emanuele Musumeci</i></a> <sup>1</sup>,
+            </span>
+            <span class="author-block">
+                <a href="https://www.linkedin.com/in/michele-brienza-ba0292253/"><i>Michele Brienza</i></a> <sup>1</sup>,
+            </span>
+            <a href="https://www.linkedin.com/in/fra-arg/"><i>Francesco Argenziano</i></a> <sup>1</sup>,
+            </span>
+            <span class="author-block">
+            <a href="https://www.linkedin.com/in/vincenzo-suriani-549429127/"><i>Vincenzo Suriani </i></a> <sup>2</sup>,
+            </span>
+            <span class="author-block">
+            <a href=""><i>Daniele Nardi</i></a><sup>1</sup>,
+            </span>
+            <span class="author-block">
+            <a href="https://web.unibas.it/bloisi/"><i>Domenico Daniele Bloisi</i></a> <sup>3</sup>,
+            </span>
+            <br>
+        <div class="is-size-6 publication-authors">
+            <span class="author-block"><sup>1</sup>Sapienza University of Rome</span>
+            <span class="author-block"><sup>2</sup>University of Basilicata</span>
+            <span class="author-block"><sup>3</sup>International University of Rome</span>
+            <br>
+        </div>
+
+        <div class="column has-text-centered">
+            <div class="publication-links">
+            <!-- PDF Link. -->
+            <span class="link-block">
+                <a href="" class="external-link button is-normal ">
+                <span class="icon">
+                    <i class="fas fa-file-pdf"></i>
+                </span>
+                <span>Paper</span>
+                </a>
+            </span>
+            <span class="link-block">
+                <a href="" class="external-link button is-normal ">
+                <span class="icon">
+                    <i class="ai ai-arxiv"></i>
+                </span>
+                <span>arXiv</span>
+                </a>
+            </span>
+            <!-- Code Link. -->
+            <span class="link-block">
+                <a href="https://github.com/Lab-RoCoCo-Sapienza/context-matters" class="external-link button is-normal ">
+                <span class="icon">
+                    <i class="fab fa-github"></i>
+                </span>
+                <span>Code</span>
+                </a>
+            </span>
+            <span class="link-block">
+                <a href="./index.html" class="external-link button is-normal ">
+                <span class="icon">
+                    <i class="fas fa-globe"></i>
+                </span>
+                <span>Site</span>
+                </a>
+            </span>
+            </div>
+
+        </div>
+        </div>
+    </div>
+    </div>
+</div>
+</section>
+
+<section class="section">
+    <div style = "margin-top: 3%" class="columns is-centered has-text-centered">
+        <div class="column is-four-fifths">
+        <h2 class="title is-3">Dataset</h2>
+        <div   class="text" style="text-align: justify;width: 70%; margin-left: 15%;"> 
+            Our dataset extends a widely used dataset by <a href="https://openaccess.thecvf.com/content_ICCV_2019/html/Armeni_3D_Scene_Graph_A_Structure_for_Unified_Semantics_3D_Space_ICCV_2019_paper.html" target="_blank">Armeni et al</a>
+            that represents scenes in 3DSG form. This dataset enable embodied agents to interact with real-world environments. 
+            However, the limited number of objects in these 3DSGs poses a challenge for LLM-based agents in generating effective plans for given tasks. 
+            We generated an extended dataset that builds on the original by incorporating additional objects into the scenes.
+            This expansion increases the environment's complexity and scope, providing a more rigorous evaluation setting. 
+            We release the dataset as a resource for the scientific community to support comparisons across related approaches. 
+            Our dataset is subdivided into several splits, each comprising a family of household tasks for which a PDDL domain is provided, 
+            as well as a natural language description of the goal and the domain structure. Each task in the split constitutes a variation around the primary theme
+            of the main household task. A subset of the tasks is formulated to be impossible with the available objects, 
+            making it necessary to solve a relaxed version of the task, adapted to items available in the environment. 
+            The dataset comprises 75 tasks across four scenes (<a href="https://3dscenegraph.stanford.edu/Allensville.html" target="_blank">Allensville</a>, <a href="https://3dscenegraph.stanford.edu/Kemblesville.html" target="_blank">Kemblesville</a>, <a href="https://3dscenegraph.stanford.edu/Parole.html" target="_blank">Parole</a>, <a href="https://3dscenegraph.stanford.edu/Shelbiana.html" target="_blank">Shelbiana</a>) 
+            which are associated with five distinct domains, described below:
+                <li>Dining Setup: Tasks related to setting the table by placing tableware, with a varying type of meal or event. </li>
+                <li>House Cleaning: The agent is required to collect rubbish and use a mop to clean the floor.</li>
+                <li>PC Assembly: Problems related to gathering PC parts in a room to build a working PC.</li>
+                <li>Laundry: Set of problems requiring to collect dirty clothes (if any), gather them in a washing machine, 
+                    and operate them by properly using detergent or soap</li>
+                <li>Office Setup: The agent is required to move containers to another room, but it must first empty them</li>
+        </div>
+    </div>
+</section>
+
+<section class="section">
+  <div class="container is-max-desktop">
+    <h2 class="title is-3">Dataset Generation</h2>
+    <div class="content">
+      <p>
+        To generate the dataset, follow these steps:
+      </p>
+      <ol>
+        <li>
+          Download the original 3D Scene Graphs from the official 
+          <a href="https://3dscenegraph.stanford.edu/" target="_blank">Gibson website</a>.
+        </li>
+        <li>
+          Clone the repository containing the dataset creation script and JSON files:
+          <pre><code>git clone https://github.com/EmanueleMusumeci/context-matters-dataset/</code></pre>
+        </li>
+        <li>
+          Navigate to the repository folder and ensure the downloaded 3D Scene Graphs are placed in the appropriate directory.
+        </li>
+        <li>
+          Run the dataset creation script:
+          <pre><code>python dataset_creation.py</code></pre>
+        </li>
+        <li>
+          The script processes the original 3D Scene Graphs to generate the extended dataset, which includes JSON files and PDDL domains. 
+          Additionally, an LLM can be utilized during the script to create natural language descriptions of the objects in the scenes by using the parameter
+          --description (python dataset_creation.py --description), default is False.
+          These descriptions provide extra details, such as the color and material of each object, offering valuable context for the planning agent.
+          The PDDL domain are also available in the repository, each corresponding to a specific task split.
+        </li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+</body>
+</html>
