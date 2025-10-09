@@ -4,7 +4,9 @@
 <h2>Relaxing Goals with LLMs for Feasible 3D Scene Planning</h2>
 
 <div>
-
+   
+[![flat](https://img.shields.io/badge/Project-Website-blue)](https://lab-rococo-sapienza.github.io/context-matters/)
+[![arxiv paper](https://img.shields.io/badge/arXiv-pdf-red)](https://arxiv.org/abs/2506.15828)
 [![license](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
 ![flat](https://img.shields.io/badge/python-3.10+-green)
 ![flat](https://img.shields.io/badge/Ubuntu-22.04-E95420)
