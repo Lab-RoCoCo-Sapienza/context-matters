@@ -17,6 +17,9 @@
 <h5>Image credits to: https://www.adexchanger.com/comic-strip/adexchanger-context-matters/</h5>
 </div>
 
+# News
+- **[2026]** Our paper has been accepted to ICRA 2026!
+
 # Install
 
 1. Clone this repo
