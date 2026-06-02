@@ -127,6 +127,14 @@
                     <span>Code</span>
                   </a>
                 </span>
+                <span class="link-block">
+                  <a href="#dataset" class="external-link button is-normal ">
+                    <span class="icon">
+                      <i class="fas fa-database"></i>
+                    </span>
+                    <span>Dataset</span>
+                  </a>
+                </span>
                 </div>
 
             </div>
@@ -225,6 +233,157 @@
     </div>
   </div>
 
+
+  <section class="section" id="dataset">
+    <div class="container is-max-desktop content">
+      <h2 class="title is-3 has-text-centered">Dataset</h2>
+      <p class="has-text-justified">
+        We release a benchmark of <strong>141 planning tasks</strong> built on top of the
+        <a href="https://3dscenegraph.stanford.edu/">3D Scene Graph (3DSG)</a> dataset.
+        Each task pairs a natural-language goal with an augmented scene graph and a PDDL domain,
+        and is designed to stress-test <em>goal relaxation</em> when strict goals are infeasible
+        in the given environment. The benchmark spans <strong>6 thematic splits</strong> and
+        <strong>10 house-scale 3DSG scenes</strong>; <strong>51</strong> of the 141 instances are
+        marked as relaxation-prone in the task specifications.
+      </p>
+
+      <h3 class="title is-4" style="margin-top: 2rem;">Splits</h3>
+      <div class="container_table">
+        <table>
+          <thead>
+            <tr>
+              <th>Split</th>
+              <th>Problems</th>
+              <th>Scene instances</th>
+              <th>Relaxation-prone</th>
+              <th>PDDL domain</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>general</code></td>
+              <td>11</td>
+              <td>66</td>
+              <td>24</td>
+              <td><code>general-domain.pddl</code></td>
+            </tr>
+            <tr>
+              <td><code>office_setup</code></td>
+              <td>8</td>
+              <td>24</td>
+              <td>9</td>
+              <td><code>office-setup-domain.pddl</code></td>
+            </tr>
+            <tr>
+              <td><code>dining_setup</code></td>
+              <td>6</td>
+              <td>18</td>
+              <td>3</td>
+              <td><code>dining-setup-domain.pddl</code></td>
+            </tr>
+            <tr>
+              <td><code>house_cleaning</code></td>
+              <td>6</td>
+              <td>18</td>
+              <td>12</td>
+              <td><code>house-cleaning-domain.pddl</code></td>
+            </tr>
+            <tr>
+              <td><code>laundry</code></td>
+              <td>6</td>
+              <td>6</td>
+              <td>3</td>
+              <td><code>laundry-domain.pddl</code></td>
+            </tr>
+            <tr>
+              <td><code>pc_assembly</code></td>
+              <td>3</td>
+              <td>9</td>
+              <td>0</td>
+              <td><code>pc-assembly-domain.pddl</code></td>
+            </tr>
+            <tr>
+              <td><strong>Total</strong></td>
+              <td><strong>40</strong></td>
+              <td><strong>141</strong></td>
+              <td><strong>51</strong></td>
+              <td>—</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="is-size-7" style="margin-top: 0.5rem;">
+        A <em>problem</em> is a task template; each template is instantiated on every 3DSG scene listed in its
+        <code>graph</code> field, yielding one <em>scene instance</em> per (problem, scene) pair.
+      </p>
+
+      <h3 class="title is-4" style="margin-top: 2rem;">What is inside</h3>
+      <p class="has-text-justified">
+        The <a href="https://github.com/Lab-RoCoCo-Sapienza/context-matters/tree/main/dataset">dataset folder</a>
+        in the project repository contains:
+      </p>
+      <ul>
+        <li><strong>Task specifications</strong> — one JSON file per split (<code>general.json</code>,
+          <code>dining_setup.json</code>, …) listing problems with fields:
+          <code>description</code>, <code>goal</code>, <code>graph</code> (3DSG scene names),
+          <code>objects</code> (objects to inject into the scene), and
+          <code>relaxation_expected</code> (whether relaxation is needed for feasibility).</li>
+        <li><strong>PDDL domains</strong> — one domain file per split (e.g. <code>house-cleaning-domain.pddl</code>)
+          defining actions and predicates for that task family.</li>
+        <li><strong>Generation scripts</strong> — <code>dataset_creation.py</code> and <code>dataset_utils.py</code>
+          to build augmented 3DSGs from the JSON specs; optional LLM-generated object descriptions via
+          <code>--description</code>.</li>
+        <li><strong>3DSG scenes</strong> — place downloaded <code>.npz</code> files under
+          <code>dataset/3dscenegraph/</code> (not shipped in the repo; see below).</li>
+      </ul>
+      <p class="has-text-justified">
+        After generation, each instance is stored under
+        <code>&lt;split&gt;/&lt;scene_name&gt;/&lt;problem_id&gt;/</code> with:
+        <code>task.txt</code> (goal), <code>description.txt</code>, <code>init_loc.txt</code> (random robot start room),
+        and the augmented scene graph as <code>&lt;scene_name&gt;.npz</code> / <code>.json</code>.
+      </p>
+      <p class="has-text-justified">
+        Scenes are taken from the 3DSG <em>tiny</em> split
+        (<code>Allensville</code>, <code>Parole</code>, <code>Shelbiana</code>, <code>Kemblesville</code>)
+        and <em>medium</em> split
+        (<code>Klickitat</code>, <code>Lakeville</code>, <code>Leonardo</code>, <code>Lindenwood</code>,
+        <code>Markleeville</code>, <code>Marstons</code>).
+      </p>
+
+      <h3 class="title is-4" style="margin-top: 2rem;">How to use</h3>
+      <p class="has-text-justified"><strong>1. Generate the augmented scenes</strong></p>
+      <ol>
+        <li>Clone the repository with submodules and install dependencies (see the
+          <a href="https://github.com/Lab-RoCoCo-Sapienza/context-matters">GitHub README</a>).</li>
+        <li>Download the <em>tiny</em> and <em>medium</em> splits from the
+          <a href="https://github.com/StanfordVL/3DSceneGraph">3DSceneGraph repository</a> and place these
+          <code>.npz</code> files in <code>dataset/3dscenegraph/</code>:
+          <code>Allensville</code>, <code>Kemblesville</code>, <code>Klickitat</code>, <code>Lakeville</code>,
+          <code>Leonardo</code>, <code>Lindenwood</code>, <code>Markleeville</code>, <code>Marstons</code>,
+          <code>Parole</code>, <code>Shelbiana</code>.</li>
+        <li>Export your OpenAI API key and run the generation script from the repo root:</li>
+      </ol>
+      <pre><code>export OPENAI_API_KEY=&lt;your OpenAI API key&gt;
+python3 dataset/dataset_creation.py</code></pre>
+      <p class="has-text-justified">
+        Optionally add LLM-written object descriptions with
+        <code>python3 dataset/dataset_creation.py --description</code>.
+      </p>
+
+      <p class="has-text-justified" style="margin-top: 1.5rem;"><strong>2. Run planning experiments</strong></p>
+      <p class="has-text-justified">
+        Pipelines read tasks from <code>dataset/</code> (configured via <code>data_path</code> in
+        <code>config/config.yaml</code>). Run a baseline with Hydra, for example:
+      </p>
+      <pre><code>export OPENAI_API_KEY=&lt;your OpenAI API key&gt;
+python3 main.py pipeline=cm</code></pre>
+      <p class="has-text-justified">
+        Available pipelines: <code>cm</code>, <code>delta</code>, <code>sayplan</code>, <code>llm_planner</code>.
+        All six splits are evaluated by default. Override parameters on the command line, e.g.
+        <code>python3 main.py pipeline=cm pipeline.workflow_iterations=3</code>.
+      </p>
+    </div>
+  </section>
 
 
   <section class="section" id="BibTeX">

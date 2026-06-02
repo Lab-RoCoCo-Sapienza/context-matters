@@ -223,3 +223,21 @@ td {
   margin-top: 25px ;
   /* margin-bottom: 100px; */
 }
+
+#dataset .container_table {
+  margin-left: 0;
+  display: flex;
+  justify-content: center;
+}
+
+#dataset table {
+  width: 100%;
+  max-width: 52rem;
+}
+
+#dataset pre {
+  background: #f5f5f5;
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+}
